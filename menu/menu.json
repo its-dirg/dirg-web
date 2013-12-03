@@ -1,0 +1,81 @@
+{
+    "icon" : "/static/dirg.png",
+    "signin": "Sign in",
+    "signout": "Sign out",
+    "configure": "Configure",
+    "right" : [
+        {
+            "name": "The team",
+            "submit": "team",
+            "class": "",
+            "children": []
+        },
+        {
+            "name": "Contacts",
+            "submit": "contacts",
+            "class": "",
+            "children": []
+        }
+    ],
+    "left" : [
+        {
+            "name": "Home",
+            "submit": "home",
+            "class": "",
+            "children": []
+        },
+        {
+            "name": "Projects",
+            "submit": "",
+            "class": "dropdown",
+            "children": [
+                {
+                    "name": "GÈANT JRA3T1",
+                    "submit": "jra3t1"
+                },
+                {
+                    "name": "GÈANT JRA3T2",
+                    "submit": "jra3t2"
+                }
+            ]
+        },
+        {
+            "name": "Technologies",
+            "submit": "",
+            "class": "dropdown",
+            "children": [
+                {
+                    "name": "SAML",
+                    "submit": "saml"
+                },
+                {
+                    "name": "OpenId Connect/OAuth",
+                    "submit": "oidc"
+                },
+                {
+                    "name": "UMA",
+                    "submit": "uma"
+                }
+            ]
+        },
+        {
+            "name": "Software",
+            "submit": "",
+            "class": "dropdown",
+            "children": [
+                {
+                    "name": "pysaml2",
+                    "submit": "pysaml2"
+                },
+                {
+                    "name": "pyoidc",
+                    "submit": "pyoidc"
+                },
+                {
+                    "name": "verify_encat",
+                    "submit": "verify_encat"
+                }
+            ]
+        }
+    ]
+}

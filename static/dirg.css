@@ -1,0 +1,25 @@
+.umulogo
+{
+    padding-right: 5mm;
+    padding-bottom: 20px;
+    padding-top: 20px;
+}
+
+.logotext
+{
+    font-size: 20px;
+    font-weight: bold;
+    font-family: Verdana;
+}
+
+.information {
+    padding: 15px;
+}
+
+.editpage{
+    float:right;
+    padding:5px
+}
+.navbar-brand {
+    padding: 0px;
+}
