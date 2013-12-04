@@ -10,6 +10,15 @@
             },
             saveInformation: function (page, html) {
                 return $http.post("/save", { "page": page, "html": html});
+            },
+            signin: function () {
+                return $http.post("/signin", {});
+            },
+            signout: function () {
+                return $http.post("/signout", {});
+            },
+            fetchMenu: function () {
+                return $http.post('/menu', {});
             }
         };
     });
@@ -17,19 +26,36 @@
     //Controller which will be executed when the web page is loaded
     app.controller('InformationCtrl', function ($scope, informationFactory, toaster) {
 
-        //Variables which will be accessible in index.mako
-        $scope.information = "Test page";
+        //The current information(HTML) for the page.
+        $scope.information = "";
+        //True if the user is editing a page, otherwise false.
         $scope.edit = false;
+        //The current page the user is viewing.
         $scope.page = "";
-        $scope.allowedEdit = true;
-        $scope.allowConfig = true;
+        //Allows the user to edit pages.
+        $scope.allowedEdit = false;
+        //The headline for the page.
         $scope.headline = "";
-        $scope.authenticated = true;
+        //True if the user is authenticated, otherwise false.
+        $scope.authenticated = false;
+        //The current menu for the user.
+        $scope.menu = "";
+        //Set to true if you want to allow menu configuration.
+        //This functionality is not fully implemented and do not work!
+        $scope.allowConfig = false;
+        //True if the user is changing the menu configurations.
+        //This functionality is not fully implemented and do not work!
+        $scope.configMenu = false;
+        //The headline when the menu is being configured.
+        //This functionality is not fully implemented and do not work!
+        $scope.configure = "";
+        //Temp. menu used during menu configuration.
+        //This functionality is not fully implemented and do not work!
+        $scope.tmpmenu = "";
 
         var getInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data;
             $scope.edit = false;
-            //toaster.pop('success', "Notification", "successfully made a Rest request");
         };
 
         var saveInformationSuccessCallback = function (data, status, headers, config) {
@@ -38,10 +64,39 @@
             toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
+        var fetchMenuSuccessCallback = function (data, status, headers, config) {
+            try {
+                $scope.configure = data.configure;
+                $scope.getInformationFromServer(data.left[0].submit, data.left[0].name);
+            } catch(e) {
+                try {
+                    $scope.getInformationFromServer(data.right[0].submit, data.left[0].name);
+                } catch(e) {
+
+                }
+            }
+            $scope.menu=data;
+        };
+
+        var signinSuccessCallback = function (data, status, headers, config) {
+            $scope.handleAuthResponse(data);
+            $scope.fetchMenu();
+            //toaster.pop('success', "Notification", "Successfully saved the page!");
+        };
+
+        var signoutSuccessCallback = function (data, status, headers, config) {
+            $scope.handleAuthResponse(data);
+            $scope.fetchMenu();
+            //toaster.pop('success', "Notification", "Successfully saved the page!");
+        };
 
         var errorCallback = function (data, status, headers, config) {
             toaster.pop('error', "Notification", data["ExceptionMessage"]);
         };
+
+        $scope.errorCallback_ = function(data, status, headers, config) {
+            errorCallback(data, status, headers, config);
+        }
 
         $scope.getInformationFromServer = function (page, name) {
             if (page != "") {
@@ -51,19 +106,46 @@
             }
         };
 
+        $scope.fetchMenu = function () {
+            informationFactory.fetchMenu().success(fetchMenuSuccessCallback).error(errorCallback);
+        };
+
         $scope.savePage = function () {
-            //$http.get('/authedit').success(function(data) {
-            //  $scope.allowedEdit = data;
-            //});
             if ($scope.allowedEdit) {
                 informationFactory.saveInformation($scope.page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
             }
         };
 
+        $scope.handleAuthResponse = function(authResponse) {
+            $scope.allowConfig = authResponse.allowConfig == "true";
+            $scope.allowedEdit = authResponse.allowedEdit == "true";
+            $scope.authenticated = authResponse.authenticated == "true";
+        }
+
+        $scope.signin = function () {
+            informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.signout = function () {
+            informationFactory.signout().success(signoutSuccessCallback).error(errorCallback);
+        };
+
+        $scope.editMenu = function () {
+            $scope.oldHeadline = $scope.headline;
+            $scope.headline = $scope.configure;
+            $scope.configMenu = true;
+            $scope.oldAllowedEdit = $scope.allowedEdit
+            $scope.allowedEdit = false;
+            $scope.information = ""
+        };
+
+        $scope.saveMenu = function () {
+            $scope.configMenu = false;
+            $scope.allowedEdit = $scope.oldAllowedEdit;
+            $scope.getInformationFromServer($scope.page, $scope.oldHeadline);
+        };
+
         $scope.editPage = function () {
-            //$http.get('/authedit').success(function(data) {
-            //  $scope.allowedEdit = data;
-            //});
             if ($scope.allowedEdit) {
                 $scope.edit = true;
             } else {
@@ -71,6 +153,33 @@
             }
 
         };
+
+    });
+
+
+    app.directive('changeMenuValue', function() {
+      return function(scope, element) {
+        element.bind('change', function() {
+          //element.attr('id')
+          //element.val();
+        });
+      };
+    });
+
+    app.directive('editmenu', function($http) {
+            return {
+                restrict: 'A',
+                templateUrl: '/static/templateConfigMenu.html',
+                link: function(scope, element, attrs) {
+                    scope.$watch('configMenu', function (val) {
+                        if (val == true){
+                            scope.tmpmenu = scope.menu;
+                        } else {
+                            scope.tmpmenu = "";
+                        }
+                    });
+                }
+            }
     });
 
 
@@ -79,18 +188,7 @@
                 restrict: 'A',
                 templateUrl: '/static/templateMenu.html',
                 link: function(scope, element, attrs) {
-                    $http.get('/menu').success(function(data) {
-                        try {
-                            scope.getInformationFromServer(data.left[0].submit, data.left[0].name);
-                        } catch(e) {
-                            try {
-                                scope.getInformationFromServer(data.right[0].submit, data.left[0].name);
-                            } catch(e) {
-
-                            }
-                        }
-                        scope.menu=data;
-                    });
+                    scope.fetchMenu();
                 }
 
             }
@@ -102,9 +200,9 @@
                 restrict: 'A',
                 //template: '<textarea id="information" name="information" class="information" ng-show="edit == true" style="width:100%">{{information}}</textarea>',
                 link: function(scope, element, attrs) {
-                    //$http.get('/authedit').success(function(data) {
-                    //  $scope.allowedEdit = data;
-                    //});
+                    $http.get('/auth').success(function(data) {
+                        scope.handleAuthResponse(data);
+                    }).error(scope.errorCallback_);
                     scope.$watch('edit', function (val) {
                         if (val) {
                             var textareaTag = document.createElement('textarea');

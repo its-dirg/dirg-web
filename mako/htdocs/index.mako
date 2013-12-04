@@ -54,8 +54,9 @@ Please view static/test.js for more example of angular and toaster.
 
 
 <%block name="body">
-    <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true" ng-click="editPage();"></div>
-    <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true"  ng-click="savePage();"></div>
+    <div editmenu></div>
+    <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true" ng-click="editPage();"></div>
+    <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true"  ng-click="savePage();"></div>
 
     <div class="information" ng-show="edit == false" ng-bind-html-unsafe="information"></div>
 

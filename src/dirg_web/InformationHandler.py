@@ -2,13 +2,13 @@
 import json
 import datetime
 import time
+import copy
 from dirg_util.http_util import Response, ServiceError
 
 __author__ = 'haho0032'
 
 
 class Information:
-
     def __init__(self, environ, start_response, session, logger, parameters, lookup, cache):
         """
         Constructor for the class.
@@ -33,6 +33,9 @@ class Information:
             "save",
             "information",
             "menu",
+            "auth",
+            "signin",
+            "signout",
         ]
 
     def verify(self, path):
@@ -49,6 +52,12 @@ class Information:
             return self.handle_menu(self.menu_file)
         if path == "save":
             return self.handle_save()
+        if path == "auth":
+            return self.handle_auth()
+        if path == "signin":
+            return self.handle_signin()
+        if path == "signout":
+            return self.handle_signout()
         else:
             return self.handle_index()
 
@@ -61,6 +70,8 @@ class Information:
         return resp(self.environ, self.start_response, **argv)
 
     def handle_save(self):
+        if not self.session.is_allowed_to_edit_page():
+            return self.service_error("You are not authorized!")
         try:
             page = None
             html = None
@@ -97,15 +108,39 @@ class Information:
         except Exception:
             return self.service_error("Invalid request!")
 
+
+    def handle_signin(self):
+        try:
+            self.session.sign_in()
+            return self.return_json(json.dumps(self.session.user_authentication()))
+        except Exception:
+            return self.service_error("The application is not working, please contact an administrator.")
+
+
+    def handle_signout(self):
+        try:
+            self.session.sign_out()
+            return self.return_json(json.dumps(self.session.user_authentication()))
+        except Exception:
+            return self.service_error("The application is not working, please contact an administrator.")
+
+
+    def handle_auth(self):
+        try:
+            return self.return_json(json.dumps(self.session.user_authentication()))
+        except Exception:
+            return self.service_error("The application is not working, please contact an administrator.")
+
     def handle_menu(self, file_):
         try:
             text = open(file_).read()
             self.cache["menu"] = json.loads(text)
-            return self.return_json(text)
+            return self.return_json(json.dumps(self.filter_menu(self.cache["menu"])))
         except IOError:
             return self.service_error("No menu file can be found!")
 
-    def find_page(self, page, menu):
+    @staticmethod
+    def find_page(page, menu):
         if page == "":
             return False
         for element in menu:
@@ -113,13 +148,38 @@ class Information:
                 return True
             for child in element["children"]:
                 if child["submit"] == page:
-                   return True
+                    return True
         return False
+
+    def filter_menu(self, menu):
+        if menu is not None:
+            if "left" in menu:
+                menu["left"] = self.filter_menu_list(menu["left"])
+            if "right" in menu:
+                menu["right"] = self.filter_menu_list(menu["right"])
+        return menu
+
+    def filter_menu_list(self, menu):
+        tmp_menu = []
+        if menu is not None:
+            for tmp_element in menu:
+                element = copy.deepcopy(tmp_element)
+                if self.session.menu_allowed(element):
+                    tmp_menu.append(element)
+                    if "children" in element:
+                        children = []
+                        for tmp_child in element["children"]:
+                            child = copy.deepcopy(tmp_child)
+                            if self.session.menu_allowed(child):
+                                children.append(child)
+                        element["children"] = children
+        return tmp_menu
 
     def validate_page(self, page):
         if "menu" not in self.cache or self.cache["menu"] is None:
             self.handle_menu(self.menu_file)
         menu = self.cache["menu"]
+        menu = self.filter_menu(menu)
         page_ok = False
         if "left" in menu:
             page_ok = self.find_page(page, menu["left"])

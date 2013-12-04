@@ -20,6 +20,7 @@
 <ul class="nav navbar-nav navbar-right"  >
   <li ng-repeat="element in menu.right" class="{{element.class}}">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="getInformationFromServer(element.submit, element.name);">
+            <b class="dropdown-toggle glyphicon glyphicon-pencil" ng-show="allowConfig == true && configMenu == true && authenticated == true"></b>
             {{element.name}}
             <b class="caret" ng-show="element.children"></b>
         </a>
@@ -29,8 +30,11 @@
           </li>
         </ul>
   </li>
-  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-pencil" title="{{menu.configure}}"  ng-show="allowConfig == true" ng-click=""></a></li>
-  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-in" title="{{menu.signin}}" ng-show="authenticated == false" ng-click=""></a></li>
-  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-out" title="{{menu.signout}}" ng-show="authenticated == true" ng-click=""></a></li>
+  <li>
+    <a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-pencil" title="{{menu.configure}}"  ng-show="allowConfig == true && configMenu == false && authenticated == true" ng-click="editMenu()"></a>
+    <a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-floppy-save" title="{{menu.configuresave}}"  ng-show="allowConfig == true && configMenu == true && authenticated == true" ng-click="saveMenu()"></a>
+  </li>
+  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-in" title="{{menu.signin}}" ng-show="authenticated == false" ng-click="signin();"></a></li>
+  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-out" title="{{menu.signout}}" ng-show="authenticated == true" ng-click="signout();"></a></li>
 </ul>
 </div><!-- /.navbar-collapse -->

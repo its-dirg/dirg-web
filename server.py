@@ -16,6 +16,8 @@ from mako.lookup import TemplateLookup
 
 
 #Lookup for all mako templates.
+from dirg_web.util import SecureSession
+
 LOOKUP = TemplateLookup(directories=['mako/templates',
                                      "/opt/dirg/dirg-util/mako/templates",
                                      'mako/htdocs'],
@@ -35,7 +37,7 @@ def application(environ, start_response):
 
     response = None
 
-    session = Session(environ)
+    session = SecureSession(environ)
 
     http_helper = HttpHandler(environ, start_response, session, logger)
 

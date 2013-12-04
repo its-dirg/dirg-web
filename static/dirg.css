@@ -23,3 +23,20 @@
 .navbar-brand {
     padding: 0px;
 }
+
+div.editmenu {
+    width: 100%;
+    text-align: left;
+    padding: 15px;
+    
+}
+
+div.editmenurow {
+    padding-bottom: 10px;
+}
+
+span.editmenu {
+    text-align: left;
+    width:300px;
+    float: left;
+}
