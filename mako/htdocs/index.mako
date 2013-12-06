@@ -62,6 +62,39 @@ Please view static/test.js for more example of angular and toaster.
 
     <br>
     <div edit></div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modalSignin" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Sign in</h4>
+            </div>
+          <div class="modal-body">
+            <select ng-model="prop.value" ng-click="setAuthMethod();" ng-options="v.type as v.name for v in prop.values"></select>
+            <form ng-submit="submitSignIn()" class="form" role="form" ng-show="authMethod == 'userpassword'">
+              <div class="form-group">
+                <label class="sr-only" for="user">User</label>
+                <input type="text" class="form-control" ng-model="user" id="user" name="user" placeholder="Enter username">
+              </div>
+              <div class="form-group">
+                <label class="sr-only" for="password">Password</label>
+                <input type="password" class="form-control" ng-model="password" id="password" name="password" placeholder="Password">
+              </div>
+              <button type="submit" class="btn btn-primary">Sign in</button>
+            </form>
+            <form action="spverify" method="post" ng-show="authMethod == 'sp'">
+              <button type="submit" class="btn btn-primary">Sign in</button>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="closeSigning()">Cancel</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
 </%block>
 
 <%block name="footer">

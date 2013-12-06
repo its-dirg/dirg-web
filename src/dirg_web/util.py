@@ -2,20 +2,39 @@ from dirg_util.session import Session
 
 __author__ = 'haho0032'
 
-class SecureSession(Session):
-    def __init__(self, environ):
-        super(SecureSession, self).__init__(environ)
-        if "authenticated" not in self:
-            self["authenticated"] = False
-        if "administrator" not in self:
-            self["administrator"] = False
+class UnknownAuthenticationType(Exception):
+    pass
 
+class SecureSession(Session):
+    SP = "sp"
+    USERPASSWORD = "userpassword"
+    AUTHENTICATED = "authenticated"
+    AUTHENTICATION_TYPE = "authentication_type"
+    ADMINISTRATOR = "administrator"
+    MENU_TYPE = "type"
+    MENU_PUBLIC = "public"
+    MENU_PRIVATE = "private"
+    MENU_CONSTRUCT = "construct"
+
+    ALLOW_CONFIG = "allowConfig"
+    ALLOW_EDIT = "allowedEdit"
+    ALLOW_SIGN_OUT = "allowSignout"
+    ALLOW_TRUE = "true"
+    ALLOW_FALSE = "false"
+
+    def __init__(self, environ, username_password):
+        super(SecureSession, self).__init__(environ)
+        if self.AUTHENTICATED not in self:
+            self[self.AUTHENTICATED] = False
+        if self.ADMINISTRATOR not in self:
+            self[self.ADMINISTRATOR] = False
+        self.username_password = username_password
 
     def is_authenticated(self):
-        return self["authenticated"]
+        return self[self.AUTHENTICATED]
 
     def is_administrator(self):
-        return self["administrator"]
+        return self[self.ADMINISTRATOR]
 
     def is_allowed_to_edit_page(self):
         if self.is_authenticated() and self.is_administrator():
@@ -23,33 +42,49 @@ class SecureSession(Session):
         return False
 
     def menu_allowed(self, menu):
-        if menu["type"] == "public":
+        if menu[self.MENU_TYPE] == self.MENU_PUBLIC:
             return True
 
-        if menu["type"] == "private" and self.is_authenticated():
+        if menu[self.MENU_TYPE] == self.MENU_PRIVATE and self.is_authenticated():
             return True
 
-        if menu["type"] == "construct" and self.is_authenticated() and self.is_administrator():
+        if menu[self.MENU_TYPE] == self.MENU_CONSTRUCT and self.is_authenticated() and self.is_administrator():
             return True
         return False
 
-    def sign_in(self, administrator = False):
-        self["authenticated"] = True
-        self["administrator"] = administrator
+    def sign_in(self, uid, type, password = None):
+        self[self.AUTHENTICATED] = False;
+        if type == self.SP:
+            self[self.AUTHENTICATION_TYPE] = type
+            self[self.AUTHENTICATED] = True
+        elif type == self.USERPASSWORD and uid in self.username_password and self.username_password[uid] == password:
+            self[self.AUTHENTICATION_TYPE] = type
+            self[self.AUTHENTICATED] = True
+        else:
+            self[self.AUTHENTICATION_TYPE] = None
+        #self[self.ADMINISTRATOR] = administrator
+        return self[self.AUTHENTICATED]
 
     def sign_out(self):
-        self["authenticated"] = False
-        self["administrator"] = False
+        #Will not handle sign out for SSO with SAML!
+        if self[self.AUTHENTICATION_TYPE] == self.SP:
+            return
+        self[self.AUTHENTICATED] = False
+        self[self.ADMINISTRATOR] = False
 
     def user_authentication(self):
         auth_object = {}
-        auth_object["allowConfig"] = "false"
-        if self["authenticated"]:
-            auth_object["authenticated"] = "true"
+        auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_TRUE
+        auth_object[self.ALLOW_CONFIG] = self.ALLOW_FALSE
+        if self[self.AUTHENTICATED]:
+            auth_object[self.AUTHENTICATED] = self.ALLOW_TRUE
         else:
-            auth_object["authenticated"] = "false"
-        if self["administrator"]:
-            auth_object["allowedEdit"] = "true"
+            auth_object[self.AUTHENTICATED] = self.ALLOW_FALSE
+        if self[self.ADMINISTRATOR]:
+            auth_object[self.ALLOW_EDIT] = self.ALLOW_TRUE
         else:
-            auth_object["allowedEdit"] = "false"
+            auth_object[self.ALLOW_EDIT] = self.ALLOW_FALSE
+        #Will not handle sign out for SSO with SAML!
+        if self[self.AUTHENTICATION_TYPE] == self.SP:
+            auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
         return auth_object

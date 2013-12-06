@@ -4,12 +4,13 @@ import datetime
 import time
 import copy
 from dirg_util.http_util import Response, ServiceError
+from dirg_web.util import SecureSession
 
 __author__ = 'haho0032'
 
 
 class Information:
-    def __init__(self, environ, start_response, session, logger, parameters, lookup, cache):
+    def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods):
         """
         Constructor for the class.
         :param environ:        WSGI enviroment
@@ -24,6 +25,7 @@ class Information:
         self.parameters = parameters
         self.lookup = lookup
         self.cache = cache
+        self.auth_methods = auth_methods
         self.backup_path = "backup/"
         self.information_path = "information/"
         self.file_ending = ".html"
@@ -35,7 +37,7 @@ class Information:
             "menu",
             "auth",
             "signin",
-            "signout",
+            "signout"
         ]
 
     def verify(self, path):
@@ -108,11 +110,14 @@ class Information:
         except Exception:
             return self.service_error("Invalid request!")
 
-
     def handle_signin(self):
         try:
-            self.session.sign_in()
-            return self.return_json(json.dumps(self.session.user_authentication()))
+            if "user" in self.parameters and "password" in self.parameters:
+                success = self.session.sign_in(self.parameters["user"], SecureSession.USERPASSWORD,
+                                               self.parameters["password"])
+                if success:
+                    return self.return_json(json.dumps(self.session.user_authentication()))
+            return self.service_error("You are not authorized!")
         except Exception:
             return self.service_error("The application is not working, please contact an administrator.")
 
@@ -127,7 +132,9 @@ class Information:
 
     def handle_auth(self):
         try:
-            return self.return_json(json.dumps(self.session.user_authentication()))
+            auth = self.session.user_authentication();
+            auth["authMethods"] = self.auth_methods;
+            return self.return_json(json.dumps(auth))
         except Exception:
             return self.service_error("The application is not working, please contact an administrator.")
 

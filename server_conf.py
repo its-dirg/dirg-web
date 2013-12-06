@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from dirg_web.util import SecureSession
 __author__ = 'haho0032'
 #Port for the webserver.
 PORT=4646
@@ -45,3 +46,8 @@ IDPTESTENVIROMENT = [
         "Description" : "The new Local IdP"
     }
 ]
+
+AUTHENTICATION_LIST = [
+                        {"type": SecureSession.USERPASSWORD, "name": "Authenticate with username/password"},
+                        {"type": SecureSession.SP, "name": "Authenticate with SAML"},
+                      ]

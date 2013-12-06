@@ -11,8 +11,8 @@
             saveInformation: function (page, html) {
                 return $http.post("/save", { "page": page, "html": html});
             },
-            signin: function () {
-                return $http.post("/signin", {});
+            signin: function (user, password) {
+                return $http.get("/signin", {params: { "user": user, "password": password}});
             },
             signout: function () {
                 return $http.post("/signout", {});
@@ -32,6 +32,8 @@
         $scope.edit = false;
         //The current page the user is viewing.
         $scope.page = "";
+        //Allows the user to sign out.
+        $scope.allowSignout = true;
         //Allows the user to edit pages.
         $scope.allowedEdit = false;
         //The headline for the page.
@@ -40,6 +42,10 @@
         $scope.authenticated = false;
         //The current menu for the user.
         $scope.menu = "";
+        //A list with all authentication methods.
+        $scope.authMethods = [];
+        //The chosen authentication method.
+        $scope.authMethod = ""
         //Set to true if you want to allow menu configuration.
         //This functionality is not fully implemented and do not work!
         $scope.allowConfig = false;
@@ -52,6 +58,7 @@
         //Temp. menu used during menu configuration.
         //This functionality is not fully implemented and do not work!
         $scope.tmpmenu = "";
+
 
         var getInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data;
@@ -79,6 +86,7 @@
         };
 
         var signinSuccessCallback = function (data, status, headers, config) {
+            $('#modalSignin').modal('hide');
             $scope.handleAuthResponse(data);
             $scope.fetchMenu();
             //toaster.pop('success', "Notification", "Successfully saved the page!");
@@ -110,6 +118,11 @@
             informationFactory.fetchMenu().success(fetchMenuSuccessCallback).error(errorCallback);
         };
 
+
+        $scope.setAuthMethod = function() {
+            $scope.authMethod = this.prop.value;
+        }
+
         $scope.savePage = function () {
             if ($scope.allowedEdit) {
                 informationFactory.saveInformation($scope.page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
@@ -117,13 +130,32 @@
         };
 
         $scope.handleAuthResponse = function(authResponse) {
+            if (authResponse.authMethods) {
+                $scope.prop = {   "type": "select",
+                    "name": authResponse.authMethods[0].name,
+                    "value": authResponse.authMethods[0].type,
+                    "values": authResponse.authMethods
+                };
+                $scope.authMethods = authResponse.authMethods;
+                $scope.authMethod = $scope.authMethods[0].type;
+            }
             $scope.allowConfig = authResponse.allowConfig == "true";
             $scope.allowedEdit = authResponse.allowedEdit == "true";
+            $scope.allowedSignout = authResponse.allowSignout == "true";
             $scope.authenticated = authResponse.authenticated == "true";
         }
 
+        $scope.submitSignIn = function () {
+            informationFactory.signin(this.user, this.password).success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.closeSigning = function () {
+            $('#modalSignin').modal('hide');
+        };
+
         $scope.signin = function () {
-            informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
+            $('#modalSignin').modal('show');
+            //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 
         $scope.signout = function () {

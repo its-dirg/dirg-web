@@ -35,6 +35,6 @@
     <a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-floppy-save" title="{{menu.configuresave}}"  ng-show="allowConfig == true && configMenu == true && authenticated == true" ng-click="saveMenu()"></a>
   </li>
   <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-in" title="{{menu.signin}}" ng-show="authenticated == false" ng-click="signin();"></a></li>
-  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-out" title="{{menu.signout}}" ng-show="authenticated == true" ng-click="signout();"></a></li>
+  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-out" title="{{menu.signout}}" ng-show="authenticated == true && allowedSignout == true" ng-click="signout();"></a></li>
 </ul>
 </div><!-- /.navbar-collapse -->

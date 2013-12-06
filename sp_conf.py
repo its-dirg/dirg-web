@@ -1,0 +1,84 @@
+__author__ = 'haho0032'
+from saml2 import BINDING_HTTP_REDIRECT
+from saml2 import BINDING_HTTP_POST
+from saml2.saml import NAME_FORMAT_URI
+from saml2.entity_category.edugain import COC
+from saml2.entity_category.swamid import RESEARCH_AND_EDUCATION
+from saml2.entity_category.swamid import HEI
+from saml2.entity_category.swamid import SFS_1993_1153
+from saml2.entity_category.swamid import NREN
+from saml2.entity_category.swamid import EU
+
+#Setup to get the right path for xmlsec.
+try:
+    from saml2.sigver import get_xmlsec_binary
+except ImportError:
+    get_xmlsec_binary = None
+if get_xmlsec_binary:
+    xmlsec_path = get_xmlsec_binary(["/opt/local/bin", "/usr/local/bin"])
+else:
+    xmlsec_path = '/usr/local/bin/xmlsec1'
+
+#Url to a discovery server for SAML. None implies not using one.
+DISCOSRV = None
+#Url to a wayf for SAML. None implies not using one.
+WAYF = None
+
+#Port for the webserver.
+PORT = 4646
+#True if HTTPS should be used instead of HTTP.
+HTTPS = True
+
+#URL to de server
+BASEURL = "localhost"
+if HTTPS:
+    BASEURL = "https://%s" % BASEURL
+else:
+    BASEURL = "http://%s" % BASEURL
+
+#Full URL to the OP server
+ISSUER = "%s:%s" % (BASEURL, PORT)
+BASE = ISSUER
+
+#The base url for the SP at the server.
+SPVERIFYBASE = "spverify"
+
+#The base url for the SP at the server.
+SPVERIFYBASEIDP = "idpspverify"
+
+#The BASE url where the Idp performs the redirect after a authn request from the SP.
+#For the cookies to work do not use subfolders.
+ASCREDIRECT = 'acsredirect'
+#The BASE url where the Idp performs a post after a authn request from the SP.
+#For the cookies to work do not use subfolders.
+ASCPOST = 'acspost'
+
+#Regual expression to match a post from Idp to SP.
+ASCVERIFYPOSTLIST = [ASCPOST + "/(.*)$", ASCPOST + "$"]
+#Regual expression to match a redirect from Idp to SP.
+ASCVERIFYREDIRECTLIST = [ASCREDIRECT + "/(.*)$", ASCREDIRECT + "$"]
+
+#Traditional pysaml2 configuration for a SP. View more documentation for pysaml2.
+CONFIG = {
+    "entityid": "%s/%ssp.xml" % (BASE, ""),
+    "description": "Verify Entity Categories SP",
+    "entity_category": [COC, RESEARCH_AND_EDUCATION, HEI, SFS_1993_1153, NREN, EU],
+    "service": {
+        "sp": {
+            "name": "Rolands SP",
+            "endpoints": {
+                "assertion_consumer_service": [
+                    (BASE + "/" + ASCREDIRECT, BINDING_HTTP_REDIRECT),
+                    (BASE + "/" + ASCPOST, BINDING_HTTP_POST)
+                ],
+                "required_attributes": ["uid"],
+            }
+        },
+    },
+    "key_file": "sp_cert/sp.key",
+    "cert_file": "sp_cert/sp.crt",
+    "attribute_map_dir": "attributemaps/",
+    "xmlsec_binary": xmlsec_path,
+    "metadata": {"local": ["/Users/haho0032/Develop/githubFork/pysaml2/example/idp2/idp.xml"]},
+    "name_form": NAME_FORMAT_URI,
+}

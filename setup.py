@@ -7,7 +7,7 @@ setup(
     author = "Hans, Hoerberg",
     author_email = "hans.horberg@umu.se",
     license="Apache 2.0",
-    packages=["dirg-web"],
+    packages=["dirg_web"],
     package_dir = {"": "src"},
     classifiers = ["Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
