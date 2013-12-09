@@ -6,7 +6,7 @@ from dirg_web.InformationHandler import Information
 
 from dirg_util.log import create_logger
 from dirg_util.session import Session
-from dirg_util.http_util import HttpHandler
+from dirg_util.http_util import HttpHandler, Response
 
 
 #External imports
@@ -31,7 +31,7 @@ LOOKUP = TemplateLookup(directories=['mako/templates',
 
 CACHE = {}
 
-#Only use username/password for initial setup or if you are an limited set of users.
+global username_password
 username_password = open("auth/user_pass.json").read()
 username_password = json.loads(username_password)
 
@@ -49,8 +49,6 @@ def application(environ, start_response):
 
     http_helper = HttpHandler(environ, start_response, session, logger)
 
-
-
     parameters = http_helper.query_dict()
 
     information = Information(environ, start_response, session, logger, parameters, LOOKUP, CACHE,
@@ -59,6 +57,11 @@ def application(environ, start_response):
     path = http_helper.path()
 
     http_helper.log_request()
+
+    #if path=="refresh":
+        #username_password = open("auth/user_pass.json").read()
+        #username_password = json.loads(username_password)
+        #return Response()(environ, start_response)
 
     if http_helper.verify_static(path):
         return http_helper.handle_static(path)

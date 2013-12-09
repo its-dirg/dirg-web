@@ -47,7 +47,7 @@ Please view static/test.js for more example of angular and toaster.
 
     <nav class="navbar navbar-default" role="navigation">
       <!-- Brand and toggle get grouped for better mobile display -->
-      <div menu></div>
+    <div menu></div>
     </nav>
     <div class="page-header">{{headline}}</div>
 </%block>
