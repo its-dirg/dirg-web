@@ -33,7 +33,7 @@ Please view static/test.js for more example of angular and toaster.
 </%block>
 
 <%block name="title">
-    My test application
+    DIRG
     ${parent.title()}
 </%block>
 
@@ -43,7 +43,7 @@ Please view static/test.js for more example of angular and toaster.
 
 <%block name="headline">
     <div ng-controller="InformationCtrl">
-    <img class="umulogo" src="/static/umu.png" /><span class="logotext">Distributed Identity Research Group</span>
+    <img class="umulogo" src="/static/logo.png" /><span class="logotext">Distributed Identity Research Group</span>
 
     <nav class="navbar navbar-default" role="navigation">
       <!-- Brand and toggle get grouped for better mobile display -->
@@ -109,11 +109,11 @@ Please view static/test.js for more example of angular and toaster.
                  <label class="sr-only" for="type">Type</label>
                  <select ng-model="invite_prop.value" ng-click="setInviteType();" id="type" name="type" ng-options="v.type as v.name for v in invite_prop.values"></select>
               </div>
-              <div class="form-group" ng-show="inviteType == 'idp_new' || inviteType == 'password_new'">
+              <div class="form-group" ng-show="inviteType == 'idp_new' || inviteType == 'pass_new'">
                 <label class="sr-only" for="forename">Forename</label>
                 <input type="text" class="form-control" ng-model="forename" id="forename" name="forename" placeholder="Enter forename">
               </div>
-              <div class="form-group"ng-show="inviteType == 'idp_new' || inviteType == 'idp_new'">
+              <div class="form-group"ng-show="inviteType == 'idp_new' || inviteType == 'pass_new'">
                 <label class="sr-only" for="surname">Surname</label>
                 <input type="text" class="form-control" ng-model="surname" id="surname" name="surname" placeholder="Enter surname">
               </div>
@@ -125,7 +125,7 @@ Please view static/test.js for more example of angular and toaster.
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default close" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
@@ -157,7 +157,7 @@ Please view static/test.js for more example of angular and toaster.
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default close" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->

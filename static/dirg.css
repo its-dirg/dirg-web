@@ -1,3 +1,7 @@
+.errormessage{
+    color: red;
+}
+
 .verification_message{
     text-align: center;
     padding: 20px;

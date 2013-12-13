@@ -39,7 +39,7 @@ Please view static/test.js for more example of angular and toaster.
 </%block>
 
 <%block name="headline">
-    <img class="umulogo" src="/static/umu.png" /><span class="logotext">Distributed Identity Research Group</span>
+    <img class="umulogo" src="/static/logo.png" /><span class="logotext">Distributed Identity Research Group</span>
 </%block>
 
 
@@ -72,20 +72,28 @@ Please view static/test.js for more example of angular and toaster.
             </form>
         </div>
     % endif
-    % if type == "password":
-        <form action="/spverify" class="form">
-          <input type="hidden" id="verify" name="verify" value="true">
-          <div class="form-group">
-            <label class="sr-only" for="user">Invite e-mail</label>
-            <input type="text" class="form-control" id="email" name="email" placeholder="Enter e-mail">
-          </div>
-          <div class="form-group">
-            <label class="sr-only" for="user">Password</label>
-            <input type="text" class="form-control" id="password1" name="password1" placeholder="Enter password">
-            <input type="text" class="form-control" id="password2" name="password2" placeholder="Enter password again">
-          </div>
-          <button type="submit" class="btn btn-primary">Verify</button>
-        </form>
+    % if type == "pass":
+        <div class="verification_form">
+            Please enter the e-mail address registered for you.
+            <form action="/verifypass" class="form">
+              <input type="hidden" id="tag" name="tag" value="${tag}">
+              <div class="form-group">
+                <label class="sr-only" for="user">Invite e-mail</label>
+                <input type="text" class="form-control" id="email" name="email" placeholder="Enter e-mail">
+              </div>
+              <div class="form-group">
+                <label class="sr-only" for="user">Password</label>
+                <input type="password" class="form-control" id="password1" name="password1" placeholder="Enter password">
+                <input type="password" class="form-control" id="password2" name="password2" placeholder="Enter password again">
+              </div>
+              <div class="errormessage">${errormessage}</div>
+              <div class="form-actions">
+                  <div class="pull-right">
+                    <button type="submit" class="btn btn-primary" >Verify</button>
+                  </div>
+              </div>
+            </form>
+        </div>
     % endif
 
 </%block>

@@ -54,7 +54,8 @@ class Information:
             "signin",
             "signout",
             "invite",
-            "verify"
+            "verify",
+            "verifypass"
         ]
 
     def verify(self, path):
@@ -81,6 +82,8 @@ class Information:
             return self.handle_invite()
         if path == "verify":
             return self.handle_verify(path)
+        if path == "verifypass":
+            return self.handle_verifypass()
         else:
             return self.handle_index()
 
@@ -148,6 +151,61 @@ class Information:
         }
         return resp(self.environ, self.start_response, **argv)
 
+    def handle_verifypass(self):
+        errormessage = ""
+        message = ""
+        type = self.type_password
+        tag = ""
+        try:
+            db = self.dirg_web_db()
+            if "email" not in self.parameters or "password1" not in self.parameters or "password2" not in self.parameters\
+                or "tag" not in self.parameters:
+                message = "Invalid verification request!"
+                type = "none"
+            tag = self.parameters["tag"]
+            type = db.verify_tag(tag)
+            if type != self.type_password:
+                message = "Invalid verification request!"
+                type = "none"
+            else:
+                password1 = self.parameters["password1"]
+                password2 = self.parameters["password2"]
+                if password1 != password2:
+                    errormessage = "The passwords must be equal!"
+                else:
+                    email = self.parameters["email"]
+                    try:
+                        db.validate_text_size("", "", "", 30, 12, password1)
+                        try:
+                            db.validate_email("", "", "", email)
+                            if not db.email_exists(email):
+                                errormessage = "Not a valid e-mail!"
+                            else:
+                                tag_type = db.verify_user(email, tag)
+                                if tag_type != self.type_password:
+                                    message = "Invalid verification request!"
+                                    type = "none"
+                                else:
+                                    db.change_password_user(email, password1)
+                                    message = "Your account is now active!"
+                                    type = "none"
+                        except DirgWebDbValidationException as ex:
+                            errormessage = "Not a valid e-mail!"
+                    except DirgWebDbValidationException as ex:
+                        errormessage = "The password must consist of at least 12 and not more then 32 characters."
+        except Exception as ex:
+            message = "Invalid verification request!"
+            type = "none"
+        resp = Response(mako_template="verify.mako",
+                        template_lookup=self.lookup,
+                        headers=[])
+        argv = {
+            "type": type,
+            "errormessage": errormessage,
+            "verification_message": message,
+            "tag": tag,
+        }
+        return resp(self.environ, self.start_response, **argv)
 
     def handle_verify(self, path):
         message = ""
@@ -177,7 +235,8 @@ class Information:
         argv = {
             "type": type,
             "verification_message": message,
-            "tag": tag
+            "tag": tag,
+            "errormessage": ""
         }
         return resp(self.environ, self.start_response, **argv)
 
@@ -190,7 +249,6 @@ class Information:
             type = self.parameters["type"]
             email = self.parameters["email"]
             db = self.dirg_web_db()
-            db.clear_db()
             try:
                 db.validate_email("", "", "", email)
             except DirgWebDbValidationException as ex:
@@ -218,8 +276,8 @@ class Information:
                 if "forename" in self.parameters or "surname" in self.parameters:
                     return self.service_error("You should not enter forename and surname for an existing user!")
                 user = db.user(email)
-                forename = user["forename"]
-                surname = user["surname"]
+                forename = user["forename"].encode("UTF-8")
+                surname = user["surname"].encode("UTF-8")
                 if type not in [self.type_idp, self.type_password]:
                     return self.service_error("Invalid request!")
 
@@ -297,6 +355,11 @@ class Information:
         try:
             if "user" in self.parameters and "password" in self.parameters:
                 success = self.session.sign_in(self.parameters["user"], SecureSession.USERPASSWORD,
+                                               self.parameters["password"])
+                if not success:
+                    db = self.dirg_web_db()
+                    valid = db.validate_password(self.parameters["user"], self.parameters["password"])
+                    success = self.session.sign_in(self.parameters["user"], SecureSession.DBPASSWORD,
                                                self.parameters["password"])
                 if success:
                     return self.return_json(json.dumps(self.session.user_authentication()))

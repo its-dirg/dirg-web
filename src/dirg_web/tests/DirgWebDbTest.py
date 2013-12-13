@@ -3,6 +3,7 @@
 import unittest
 from urlparse import parse_qs
 import base64
+import hashlib
 from dirg_web.util import DirgWebDb, DirgWebDbValidationException
 
 __author__ = 'haho0032'
@@ -204,7 +205,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             db.create_user("hans.horberg@umu.se", "Hans", "Hörberg")
             db.change_password_user("hans.horberg@umu.se", "qwertyuiopasdf")
             users = db.list_all_users()
-            self.assertTrue(users[0]["password"] == "qwertyuiopasdf")
+            self.assertTrue(users[0]["password"] == hashlib.sha224(base64.b64encode("qwertyuiopasdf")).hexdigest())
 
             try:
                 tag_type = db.change_password_user("hans.horberg@umu.se", "qwertyuiopasd")
@@ -266,7 +267,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             db.clear_db()
             db.create_user("hans.horberg@umu.se", "Hans", "Hörberg")
             db.add_uid_user("hans.horberg@umu.se", "qwertyuiopasdf")
-            valid = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
+            valid, email = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
 
             self.assertTrue(not valid)
 
@@ -275,7 +276,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             qs = parse_qs(split_str[1])
             tag_type = db.verify_user("hans.horberg@umu.se", qs["tag"][0])
 
-            valid = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
+            valid, email = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
             self.assertTrue(valid)
         except Exception as ex:
             self.fail(ex.message)
@@ -361,7 +362,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             db.add_uid_user("hans.horberg@umu.se", "qwertyuiopasdf")
             db.add_uid_user("hans.horberg@umu.se", "qwertyuiopasdf1234")
 
-            valid = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
+            valid, email = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
             self.assertTrue(not valid)
 
             verify_url = db.create_verify_user("hans.horberg@umu.se", "idp")
@@ -369,20 +370,20 @@ class VerifyDirgWebDb(unittest.TestCase):
             qs = parse_qs(split_str[1])
             tag_type = db.verify_user("hans.horberg@umu.se", qs["tag"][0])
 
-            valid = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
+            valid, email = db.validate_uid("hans.horberg@umu.se", "qwertyuiopasdf")
             self.assertTrue(valid)
 
-            valid = db.validate_uid("hans.horberg@umu.se", "qwertyuio")
+            valid, email = db.validate_uid("hans.horberg@umu.se", "qwertyuio")
             self.assertTrue(not valid)
 
-            valid = db.validate_uid("roland.hedberg@adm.umu.se", "qwertyuiopasdf1234")
+            valid, email = db.validate_uid("roland.hedberg@adm.umu.se", "qwertyuiopasdf1234")
             self.assertTrue(not valid)
 
             db.add_uid_user("hans.horberg@umu.se", "j243234fdssdf#€#€#€SDFSDAF")
-            valid = db.validate_uid("hans.horberg@umu.se", "j243234fdssdf#€#€#€SDFSDAF")
+            valid, email = db.validate_uid("hans.horberg@umu.se", "j243234fdssdf#€#€#€SDFSDAF")
             self.assertTrue(valid)
 
-            email_valid = db.validate_uid(None, "j243234fdssdf#€#€#€SDFSDAF")
-            self.assertTrue(email_valid == "hans.horberg@umu.se")
+            valid, email = db.validate_uid(None, "j243234fdssdf#€#€#€SDFSDAF")
+            self.assertTrue(email == "hans.horberg@umu.se")
         except Exception as ex:
             self.fail(ex.message)

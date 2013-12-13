@@ -5,6 +5,7 @@ from dirg_util.session import Session
 import logging
 import random
 import string
+import hashlib
 from validate_email import validate_email
 
 import sqlite3
@@ -23,6 +24,7 @@ class SecureSession(Session):
     VERIFICATION ="verification"
     VERIFICATION_TAG ="verification_tag"
     USERPASSWORD = "userpassword"
+    DBPASSWORD = "dbpassword"
     AUTHENTICATED = "authenticated"
     AUTHENTICATION_TYPE = "authentication_type"
     ADMINISTRATOR = "administrator"
@@ -31,6 +33,7 @@ class SecureSession(Session):
     MENU_PRIVATE = "private"
     MENU_CONSTRUCT = "construct"
 
+    ALLOW_CHANGEPASSWORD = "allowChangePassword"
     ALLOW_CONFIG = "allowConfig"
     ALLOW_EDIT = "allowedEdit"
     ALLOW_SIGN_OUT = "allowSignout"
@@ -79,7 +82,7 @@ class SecureSession(Session):
         return False
 
     def is_allowed_to_change_password(self):
-        if self.is_authenticated():
+        if self.is_authenticated() and self[self.AUTHENTICATION_TYPE] == self.USERPASSWORD:
             return True
         return False
 
@@ -107,6 +110,10 @@ class SecureSession(Session):
         elif type == self.USERPASSWORD and uid in self.username_password and self.username_password[uid] == password:
             self[self.AUTHENTICATION_TYPE] = type
             self[self.AUTHENTICATED] = True
+            self[self.ADMINISTRATOR] = True
+        if type == self.DBPASSWORD:
+            self[self.AUTHENTICATION_TYPE] = self.USERPASSWORD
+            self[self.AUTHENTICATED] = True
         else:
             self[self.AUTHENTICATION_TYPE] = None
         #self[self.ADMINISTRATOR] = administrator
@@ -121,6 +128,7 @@ class SecureSession(Session):
 
     def user_authentication(self):
         auth_object = {}
+        auth_object[self.ALLOW_CHANGEPASSWORD] = self.ALLOW_FALSE
         auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_TRUE
         auth_object[self.ALLOW_CONFIG] = self.ALLOW_FALSE
         if self[self.AUTHENTICATED]:
@@ -131,6 +139,8 @@ class SecureSession(Session):
             auth_object[self.ALLOW_EDIT] = self.ALLOW_TRUE
         else:
             auth_object[self.ALLOW_EDIT] = self.ALLOW_FALSE
+        if self.is_allowed_to_change_password():
+            auth_object[self.ALLOW_CHANGEPASSWORD] = self.ALLOW_TRUE
         #Will not handle sign out for SSO with SAML!
         #if self[self.AUTHENTICATION_TYPE] == self.SP:
         #    auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
@@ -377,8 +387,9 @@ class DirgWebDb(object):
         if not isinstance(email, unicode):
             email = unicode(email, "UTF-8")
         if not isinstance(password, unicode):
-            password = unicode(password, "UTF-8")
-        self.validate_text_size("dirg_web_user", "", "password", 30, 12, password)
+            password_check = unicode(password, "UTF-8")
+        self.validate_text_size("dirg_web_user", "", "password", 30, 12, password_check)
+        password = hashlib.sha224(base64.b64encode(password)).hexdigest()
         self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
@@ -397,7 +408,7 @@ class DirgWebDb(object):
                 self.create_validation_exception("dirg_web_user", "", "email", "E-mail + " +
                                                                                email + " do not exist!")
             conn.close()
-            return 0
+            return False
         finally:
             conn.close()
 
@@ -419,8 +430,9 @@ class DirgWebDb(object):
         if not isinstance(email, unicode):
             email = unicode(email, "UTF-8")
         if not isinstance(password, unicode):
-            password = unicode(password, "UTF-8")
-        self.validate_text_size("dirg_web_user", "", "password", 30, 12, password)
+            password_check = unicode(password, "UTF-8")
+        self.validate_text_size("dirg_web_user", "", "password", 30, 12, password_check)
+        password = hashlib.sha224(base64.b64encode(password)).hexdigest()
         self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
@@ -444,7 +456,7 @@ class DirgWebDb(object):
             email = unicode(email, "UTF-8")
         if not isinstance(uid, unicode):
             uid = unicode(uid, "UTF-8")
-        self.validate_text_size("dirg_web_user", "", "password", 100, 5, uid)
+        self.validate_text_size("dirg_web_user", "", "uid", 100, 5, uid)
         self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
@@ -543,7 +555,9 @@ class DirgWebDb(object):
         conn = self.db_connect()
         try:
             c = conn.cursor()
-            c.execute('SELECT rowid, dwu.* FROM dirg_web_user dwu')
+            query = 'SELECT rowid, dwu.id, dwu.email, dwu.password, dwu.forename, dwu.surname, dwu.verify, dwu.valid,' \
+                'dwu.random_tag, dwu.tag_type, dwu.admin FROM dirg_web_user dwu'
+            c.execute(query)
 
             response_list = []
             response = c.fetchmany()
@@ -552,10 +566,10 @@ class DirgWebDb(object):
                 response = response[0]
                 response_dict["rowid"] = response[0]
                 response_dict["id"] = response[1]
-                response_dict["email"] = response[2]
+                response_dict["email"] = unicode(response[2], "UTF-8")
                 response_dict["password"] = response[3]
-                response_dict["forename"] = response[4]
-                response_dict["surname"] = response[5]
+                response_dict["forename"] = unicode(response[4], "UTF-8")
+                response_dict["surname"] = unicode(response[5], "UTF-8")
                 response_dict["verify"] = response[6]
                 response_dict["valid"] = response[7]
                 response_dict["random_tag"] = response[8]
@@ -586,10 +600,10 @@ class DirgWebDb(object):
                     response = response[0]
                     response_dict["rowid"] = response[0]
                     response_dict["id"] = response[1]
-                    response_dict["email"] = response[2]
+                    response_dict["email"] = unicode(response[2].encode("UTF-8"), "UTF-8")
                     response_dict["password"] = response[3]
-                    response_dict["forename"] = response[4]
-                    response_dict["surname"] = response[5]
+                    response_dict["forename"] = unicode(response[4].encode("UTF-8"), "UTF-8")
+                    response_dict["surname"] = unicode(response[5].encode("UTF-8"), "UTF-8")
                     response_dict["verify"] = response[6]
                     response_dict["valid"] = response[7]
                     response_dict["random_tag"] = response[8]

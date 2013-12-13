@@ -40,6 +40,8 @@
         $scope.edit = false;
         //The current page the user is viewing.
         $scope.page = "";
+        //Allows the user to change password
+        $scope.allowChangePassword = false;
         //Allows the user to sign out.
         $scope.allowSignout = true;
         //Allows the user to edit pages.
@@ -172,9 +174,14 @@
             $scope.allowedEdit = authResponse.allowedEdit == "true";
             $scope.allowedSignout = authResponse.allowSignout == "true";
             $scope.authenticated = authResponse.authenticated == "true";
+            $scope.allowChangePassword = authResponse.allowChangePassword == "true";
         }
 
         $scope.submitSignIn = function () {
+            user = this.user
+            password = this.password
+            this.user = ""
+            this.password = ""
             informationFactory.signin(this.user, this.password).success(signinSuccessCallback).error(errorCallback);
         };
 
@@ -184,6 +191,12 @@
         };
 
         $scope.submitInvite = function () {
+            forname = this.forname;
+            surname = this.surname;
+            email = this.email;
+            this.forname = "";
+            this.surname = "";
+            this.email = "";
             informationFactory.invite(this.forename, this.surname, this.email, this.invite_prop.value).success(inviteSuccessCallback).error(errorCallback);
         };
 
