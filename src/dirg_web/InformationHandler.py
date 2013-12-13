@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 import json
 import datetime
+from smtplib import SMTPException
 import time
 import copy
+import smtplib
 from dirg_util.http_util import Response, ServiceError
-from dirg_web.util import SecureSession
+from dirg_web.util import SecureSession, DirgWebDbValidationException, DirgWebDb
 
 __author__ = 'haho0032'
 
 
 class Information:
-    def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods):
+
+
+    def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods, sqlite_db,
+                 email_config, sphandler):
         """
         Constructor for the class.
         :param environ:        WSGI enviroment
@@ -26,6 +31,16 @@ class Information:
         self.lookup = lookup
         self.cache = cache
         self.auth_methods = auth_methods
+        self.sqlite_db = sqlite_db
+        self.email_config = email_config
+        self.sphandler = sphandler
+        self.verify_path = "/verify"
+        self.param_tag = "tag"
+        self.param_type = "type"
+        self.type_password = "pass"
+        self.type_idp = "idp"
+        self.type_password_new = "pass_new"
+        self.type_idp_new = "idp_new"
         self.backup_path = "backup/"
         self.information_path = "information/"
         self.file_ending = ".html"
@@ -37,7 +52,9 @@ class Information:
             "menu",
             "auth",
             "signin",
-            "signout"
+            "signout",
+            "invite",
+            "verify"
         ]
 
     def verify(self, path):
@@ -60,6 +77,10 @@ class Information:
             return self.handle_signin()
         if path == "signout":
             return self.handle_signout()
+        if path == "invite":
+            return self.handle_invite()
+        if path == "verify":
+            return self.handle_verify(path)
         else:
             return self.handle_index()
 
@@ -70,6 +91,168 @@ class Information:
         argv = {
         }
         return resp(self.environ, self.start_response, **argv)
+
+    def dirg_web_db(self):
+        db = DirgWebDb(self.sqlite_db, self.verify_path, self.param_tag, self.param_type, self.type_password,
+                       self.type_idp)
+        return db
+
+    def signin_idp(self, uid):
+        db = self.dirg_web_db()
+        try:
+            success, email = db.validate_uid(None, uid)
+            if success:
+                if email is not None:
+                    self.session.email(email)
+                self.session.sign_in(uid, SecureSession.SP)
+                return self.handle_index()
+
+        except Exception as ex:
+            pass
+        resp = Response(mako_template="verify.mako",
+                        template_lookup=self.lookup,
+                        headers=[])
+        argv = {
+            "type": "none",
+            "verification_message": "You are not allowed to use the application. Please apply for access.",
+            "tag": ""
+        }
+        return resp(self.environ, self.start_response, **argv)
+
+    def handle_idpverify(self, email, tag, uid):
+        try:
+            db = self.dirg_web_db()
+            if email is None or db.email_exists(email) :
+                if email is None:
+                    email = db.email_from_tag(tag)
+                type = db.verify_user(email, tag)
+                if type not in [self.type_idp, self.type_password]:
+                    message = "Invalid verification url. Please request for a new."
+                else:
+
+                    db.add_uid_user(email, uid)
+                    self.session.email(email)
+                    self.session.sign_in(uid, SecureSession.SP)
+                    message = "You have successfully validated your e-mail and is now signed in."
+            else:
+                message = "Your validation failed! You must type the correct e-mail address."
+        except:
+            message = "Your validation failed! You must type the correct e-mail address."
+        resp = Response(mako_template="verify.mako",
+                        template_lookup=self.lookup,
+                        headers=[])
+        argv = {
+            "type": "none",
+            "verification_message": message,
+            "tag": ""
+        }
+        return resp(self.environ, self.start_response, **argv)
+
+
+    def handle_verify(self, path):
+        message = ""
+        tag = ""
+        if "tag" not in self.parameters:
+            message = "Invalid verification url. Please request for a new."
+            type = "none"
+        else:
+            db = self.dirg_web_db()
+            tag = self.parameters["tag"]
+            type = db.verify_tag(tag)
+            if type not in [self.type_idp, self.type_password]:
+                message = "Invalid verification url. Please request for a new."
+                type = "none"
+            else:
+                message = ""
+                type = type
+                parameters = {"tag": tag, "verify": "true"}
+                if type == self.type_idp:
+                    return self.sphandler.handle_sp_requests(self.environ, self.start_response,
+                                                             self.sphandler.sp_conf.SPVERIFYBASE,
+                                                             self.session,parameters, self)
+
+        resp = Response(mako_template="verify.mako",
+                        template_lookup=self.lookup,
+                        headers=[])
+        argv = {
+            "type": type,
+            "verification_message": message,
+            "tag": tag
+        }
+        return resp(self.environ, self.start_response, **argv)
+
+    def handle_invite(self):
+        try:
+            forename = ""
+            surname = ""
+            if "email" not in self.parameters or "type" not in self.parameters:
+                return self.service_error("Invalid request!")
+            type = self.parameters["type"]
+            email = self.parameters["email"]
+            db = self.dirg_web_db()
+            db.clear_db()
+            try:
+                db.validate_email("", "", "", email)
+            except DirgWebDbValidationException as ex:
+                return self.service_error("Not a valid e-mail!");
+            new_user = False
+            if not db.email_exists(email):
+                if type not in [self.type_idp_new, self.type_password_new]:
+                    return self.service_error("Invalid request!")
+                if type == self.type_idp_new:
+                    type = self.type_idp
+                if type == self.type_password_new:
+                    type = self.type_password
+                if "forename" not in self.parameters or "surname" not in self.parameters:
+                    return self.service_error("You must enter forename and surname for a new user.")
+                forename = self.parameters["forename"]
+                surname = self.parameters["surname"]
+                try:
+                    db.validate_text_size("", "", "", 30, 2, forename)
+                    db.validate_text_size("", "", "", 30, 2, surname)
+                except DirgWebDbValidationException as ex:
+                    return self.service_error("Forename and surname must consist of 2 and is limited to 30 characters");
+                db.create_user(email, forename, surname)
+                new_user = True
+            else:
+                if "forename" in self.parameters or "surname" in self.parameters:
+                    return self.service_error("You should not enter forename and surname for an existing user!")
+                user = db.user(email)
+                forename = user["forename"]
+                surname = user["surname"]
+                if type not in [self.type_idp, self.type_password]:
+                    return self.service_error("Invalid request!")
+
+            validation_url = self.email_config["base_url"] + db.create_verify_user(email, type)
+
+            sender = self.email_config["from"]
+            receivers = [email]
+
+            message = "From: " + self.email_config["from_name"] + " <" + self.email_config["from"] + ">\n"
+            message += "To: " + forename + surname + " <" + email + ">\n"
+            message += "Subject: " + self.email_config["subject"] + "\n"
+            message += "\n"
+            message += self.email_config["message_start"]
+            message += "\n\n" + validation_url + "\n\n"
+            message += self.email_config["message_end"]
+            try:
+                smtp_obj = smtplib.SMTP(self.email_config["server"])
+                if self.email_config["secure"]:
+                    smtp_obj.starttls()
+                if self.email_config["user_password"]:
+                    smtp_obj.login(self.email_config["username"], self.email_config["password"])
+                smtp_obj.sendmail(sender, receivers, message)
+            except Exception as ex:
+                return self.service_error("Unable to send email!")
+
+            if new_user:
+                return self.return_json("The user has been added and an invite is sent to the given e-mail.")
+            return self.return_json("A new invite has been sent to the user.")
+        except DirgWebDbValidationException as ex:
+            return self.service_error("Invalid request!");
+        except Exception as ex:
+            return self.service_error("Invalid request!")
+        
 
     def handle_save(self):
         if not self.session.is_allowed_to_edit_page():

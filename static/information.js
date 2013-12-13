@@ -14,6 +14,14 @@
             signin: function (user, password) {
                 return $http.get("/signin", {params: { "user": user, "password": password}});
             },
+            invite: function(forename, surname, email, type){
+                return $http.get("/invite", {params: {
+                    "forename": forename,
+                    "surname": surname,
+                    "email": email,
+                    "type": type
+                }});
+            },
             signout: function () {
                 return $http.post("/signout", {});
             },
@@ -60,6 +68,17 @@
         $scope.tmpmenu = "";
 
 
+        $scope.inviteType = "idp_new"
+        $scope.invite_prop = {   "type": "select",
+                    "name": "Invite user to sign in with SAML.",
+                    "value": "idp_new",
+                    "values": [{"type": "idp_new", "name": "Invite new user to sign in with SAML."},
+                        {"type": "idp", "name": "Invite existing user to sign in with SAML."},
+                        {"type": "pass_new", "name": "Invite new user to sign in with password."},
+                        {"type": "pass", "name": "Invite existing user to sign in with password."}]
+                };
+
+
         var getInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data;
             $scope.edit = false;
@@ -92,6 +111,11 @@
             //toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
+     var inviteSuccessCallback = function (data, status, headers, config) {
+         toaster.pop('success', "Notification", data);
+            $('#modalInvite').modal('hide');
+        };
+
         var signoutSuccessCallback = function (data, status, headers, config) {
             $scope.handleAuthResponse(data);
             $scope.fetchMenu();
@@ -118,10 +142,15 @@
             informationFactory.fetchMenu().success(fetchMenuSuccessCallback).error(errorCallback);
         };
 
-
         $scope.setAuthMethod = function() {
             $scope.authMethod = this.prop.value;
         }
+
+        $scope.setInviteType = function() {
+            $scope.inviteType = this.invite_prop.value;
+        }
+
+
 
         $scope.savePage = function () {
             if ($scope.allowedEdit) {
@@ -149,12 +178,36 @@
             informationFactory.signin(this.user, this.password).success(signinSuccessCallback).error(errorCallback);
         };
 
+
+        $scope.submitChangePassword = function () {
+            //informationFactory.signin(this.user, this.password).success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.submitInvite = function () {
+            informationFactory.invite(this.forename, this.surname, this.email, this.invite_prop.value).success(inviteSuccessCallback).error(errorCallback);
+        };
+
         $scope.closeSigning = function () {
             $('#modalSignin').modal('hide');
         };
 
         $scope.signin = function () {
             $('#modalSignin').modal('show');
+            //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.changePassword = function () {
+            $('#modalChangePassword').modal('show');
+            //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.invite = function () {
+            $('#modalInvite').modal('show');
+            //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.changePassword = function () {
+            $('#modalChangePassword').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 

@@ -1,3 +1,11 @@
+.verification_message{
+    text-align: center;
+    padding: 20px;
+}
+
+.verification_form{
+    padding: 20px;
+}
 .umulogo
 {
     padding-right: 5mm;

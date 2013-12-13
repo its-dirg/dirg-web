@@ -1,3 +1,4 @@
+from Carbon import List
 from dirg_web.util import SecureSession
 
 __author__ = 'haho0032'
@@ -85,7 +86,10 @@ class SpHandler:
         :param session: The current session for the user.
         :return: User identification
         """
-        uid = response.assertion.subject.name_id.text
+        #uid = response.assertion.subject.name_id.text
+        uid = response.ava['eduPersonPrincipalName']
+        if isinstance(uid, list):
+            uid = uid[0]
         #spHandlerCache = self.getSpHandlerCache(uid)
         #if spHandlerCache is None:
         #    spHandlerCache = SpHandlerCache()
@@ -96,7 +100,7 @@ class SpHandler:
         #spHandlerCache.auth = True
         return uid
 
-    def handle_sp_requests(self, environ, start_response, path, session):
+    def handle_sp_requests(self, environ, start_response, path, session, parameters, information_handler):
         """
         Handles all url:s that are intended for the sp.
         :param environ: WSGI enviroment.
@@ -107,6 +111,15 @@ class SpHandler:
                  URL to the authorization endpoint.
                  400 bad request.
         """
+        if "verify" in parameters and parameters["verify"] == "true":
+            if "tag" in parameters:
+                if "email" in parameters:
+                    session.email(parameters["email"])
+                else:
+                    session.email(None)
+                session.verification(True)
+                session.verification_tag(parameters["tag"])
+
         if self.SPHANDLERSSOCACHE not in session or session[self.SPHANDLERSSOCACHE] is None:
             session[self.SPHANDLERSSOCACHE] = Cache()
         if re.search(self.sp_conf.SPVERIFYBASE, path) or re.search(self.sp_conf.SPVERIFYBASEIDP, path):
@@ -117,15 +130,21 @@ class SpHandler:
             if match is not None:
                 acs = ACS(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE])
                 uid = self.handleIdPResponse(acs.post(), environ["HTTP_COOKIE"], session)
-                session.sign_in(uid, SecureSession.SP)
-                resp = Redirect("/")
-                return resp(environ, start_response)
+                if session.is_verification():
+                    session.verification(False)
+                    return information_handler.handle_idpverify(session.email(), session.verification_tag(), uid)
+                else:
+                    #session.sign_in(uid, SecureSession.SP)
+                    return information_handler.signin_idp(uid)
         for regex in self.sp_conf.ASCVERIFYREDIRECTLIST:
             match = re.search(regex, path)
             if match is not None:
                 acs = ACS(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE])
                 uid = self.handleIdPResponse(acs.redirect(), environ["HTTP_COOKIE"], session)
-                session.sign_in(uid, SecureSession.SP)
-                resp = Redirect("/")
-                return resp(environ, start_response)
+                if session.is_verification():
+                    session.verification(False)
+                    return information_handler.handle_idpverify(session.email(), session.verification_tag(), uid)
+                else:
+                    #session.sign_in(uid, SecureSession.SP)
+                    return information_handler.signin_idp(uid)
 

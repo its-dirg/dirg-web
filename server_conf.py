@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from dirg_web.util import SecureSession
 __author__ = 'haho0032'
 #Port for the webserver.
@@ -51,3 +52,19 @@ AUTHENTICATION_LIST = [
                         {"type": SecureSession.USERPASSWORD, "name": "Authenticate with username/password"},
                         {"type": SecureSession.SP, "name": "Authenticate with SAML"},
                       ]
+
+SQLITE_DB = os.path.dirname(os.path.abspath( __file__ )) + "/sqlite.db"
+
+EMAIL_CONFIG = {
+    "base_url": ISSUER,
+    "server": "",
+    "from": "",
+    "secure": True,
+    "user_password": False,
+    "username": "",
+    "password": "",
+    "from_name": "",
+    "subject": "",
+    "message_start": "",
+    "message_end": ""
+}

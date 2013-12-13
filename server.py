@@ -43,6 +43,7 @@ def application(environ, start_response):
     :return: Depends on the request. Always a WSGI response where start_response first have to be initialized.
     """
 
+    verification = False
     response = None
 
     session = SecureSession(environ, username_password)
@@ -52,7 +53,7 @@ def application(environ, start_response):
     parameters = http_helper.query_dict()
 
     information = Information(environ, start_response, session, logger, parameters, LOOKUP, CACHE,
-                              config.AUTHENTICATION_LIST)
+                              config.AUTHENTICATION_LIST , config.SQLITE_DB, config.EMAIL_CONFIG, sphandler)
 
     path = http_helper.path()
 
@@ -69,12 +70,14 @@ def application(environ, start_response):
     if information.verify(path):
         return information.handle(path)
     elif sphandler.verify_sp_requests(path):
-        response = sphandler.handle_sp_requests(environ, start_response, path, session)
+        response = sphandler.handle_sp_requests(environ, start_response, path, session, parameters, information)
+        verification = session.is_verification()
 
     if response is None:
         response = http_helper.http404()
 
     http_helper.log_response(response)
+    session.verification(verification)
     return response
 
 

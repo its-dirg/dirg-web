@@ -1,0 +1,52 @@
+{
+    "icon" : "/static/icon.png",
+    "invite": "Invite",
+    "changepassword": "Change password",
+    "signin": "Sign in",
+    "signout": "Sign out",
+    "configure": "Edit menu",
+    "configuresave": "Save menu",
+    "right" : [
+        {
+            "name": "The team",
+            "submit": "team",
+            "type": "private",
+            "class": "",
+            "children": []
+        },
+        {
+            "name": "Contacts",
+            "submit": "contacts",
+            "type": "public",
+            "class": "",
+            "children": []
+        }
+    ],
+    "left" : [
+        {
+            "name": "Home",
+            "submit": "home",
+            "type": "public",
+            "class": "",
+            "children": []
+        },
+        {
+            "name": "Projects",
+            "submit": "",
+            "type": "public",
+            "class": "dropdown",
+            "children": [
+                {
+                    "name": "Project 1",
+                    "submit": "project1",
+                    "type": "public"
+                },
+                {
+                    "name": "Project 2",
+                    "submit": "project2",
+                    "type": "public"
+                }
+            ]
+        }
+    ]
+}

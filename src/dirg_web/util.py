@@ -19,6 +19,9 @@ class UnknownAuthenticationType(Exception):
 
 class SecureSession(Session):
     SP = "sp"
+    EMAIL = "email"
+    VERIFICATION ="verification"
+    VERIFICATION_TAG ="verification_tag"
     USERPASSWORD = "userpassword"
     AUTHENTICATED = "authenticated"
     AUTHENTICATION_TYPE = "authentication_type"
@@ -42,11 +45,43 @@ class SecureSession(Session):
             self[self.ADMINISTRATOR] = False
         self.username_password = username_password
 
+    def email(self, email=None):
+        if email is not None:
+            self[self.EMAIL] = email
+        if self.EMAIL not in self:
+            return None
+        return self[self.EMAIL]
+
+    def verification_tag(self, tag=None):
+        if tag is not None:
+            self[self.VERIFICATION_TAG] = tag
+        if self.VERIFICATION_TAG not in self:
+            return None
+        return self[self.VERIFICATION_TAG]
+
+    def verification(self, verify):
+        self[self.VERIFICATION] = verify
+
+    def is_verification(self):
+        if self.VERIFICATION not in self:
+            return False
+        return self[self.VERIFICATION]
+
     def is_authenticated(self):
         return self[self.AUTHENTICATED]
 
     def is_administrator(self):
         return self[self.ADMINISTRATOR]
+
+    def is_allowed_to_invite(self):
+        if self.is_authenticated() and self.is_administrator():
+            return True
+        return False
+
+    def is_allowed_to_change_password(self):
+        if self.is_authenticated():
+            return True
+        return False
 
     def is_allowed_to_edit_page(self):
         if self.is_authenticated() and self.is_administrator():
@@ -79,8 +114,8 @@ class SecureSession(Session):
 
     def sign_out(self):
         #Will not handle sign out for SSO with SAML!
-        if self[self.AUTHENTICATION_TYPE] == self.SP:
-            return
+        #if self[self.AUTHENTICATION_TYPE] == self.SP:
+        #    return
         self[self.AUTHENTICATED] = False
         self[self.ADMINISTRATOR] = False
 
@@ -97,8 +132,8 @@ class SecureSession(Session):
         else:
             auth_object[self.ALLOW_EDIT] = self.ALLOW_FALSE
         #Will not handle sign out for SSO with SAML!
-        if self[self.AUTHENTICATION_TYPE] == self.SP:
-            auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
+        #if self[self.AUTHENTICATION_TYPE] == self.SP:
+        #    auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
         return auth_object
 
 class DirgWebDbValidationException(Exception):
@@ -228,19 +263,45 @@ class DirgWebDb(object):
         finally:
             conn.close()
 
-    def verify_user(self, email, tag):
-        if not isinstance(email, unicode):
-            email = unicode(email, "UTF-8")
+    def verify_tag(self, tag):
         if not isinstance(tag, unicode):
             tag = unicode(tag, "UTF-8")
-        self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
             c = conn.cursor()
-            c.execute('SELECT count(*) FROM dirg_web_user WHERE email=? and random_tag=? and tag_type <> ?',
-                      (email, tag, "none"))
+            c.execute('SELECT count(*) FROM dirg_web_user WHERE random_tag=? and tag_type <> ?',
+                      (tag, "none"))
             response = c.fetchone()
             count = response[0]
+            if count == 1:
+                c.execute('SELECT tag_type FROM dirg_web_user WHERE random_tag=? and tag_type <> ?',
+                          (tag, "none"))
+                response = c.fetchone()
+                tag_type = response[0]
+                conn.close()
+                return tag_type
+            else:
+                conn.close()
+                return None
+        finally:
+            conn.close()
+
+    def verify_user(self, email, tag):
+        if not isinstance(email, unicode) and email is not None:
+            email = unicode(email, "UTF-8")
+        if not isinstance(tag, unicode):
+            tag = unicode(tag, "UTF-8")
+        if email is not None:
+            self.validate_email("dirg_web_user", "", "email", email)
+        conn = self.db_connect()
+        try:
+            count = 0
+            c = conn.cursor()
+            if email is not None:
+                c.execute('SELECT count(*) FROM dirg_web_user WHERE email=? and random_tag=? and tag_type <> ?',
+                          (email, tag, "none"))
+                response = c.fetchone()
+                count = response[0]
             if count == 1:
                 c.execute('SELECT tag_type FROM dirg_web_user WHERE email=? and random_tag=? and tag_type <> ?',
                           (email, tag, "none"))
@@ -249,6 +310,17 @@ class DirgWebDb(object):
                 random_tag = "".join(random.choice(string.ascii_uppercase + string.digits) for x in range(20))
                 c.execute("UPDATE dirg_web_user SET verify = ?, random_tag = ?, tag_type = ? "
                           "WHERE email=?", (0, random_tag, "none", email))
+                conn.commit()
+                conn.close()
+                return tag_type
+            elif email is None:
+                c.execute('SELECT tag_type FROM dirg_web_user WHERE random_tag=? and tag_type <> ?',
+                          (tag, "none"))
+                response = c.fetchone()
+                tag_type = response[0]
+                random_tag = "".join(random.choice(string.ascii_uppercase + string.digits) for x in range(20))
+                c.execute("UPDATE dirg_web_user SET verify = ?, random_tag = ?, tag_type = ? "
+                          "WHERE random_tag=?", (0, random_tag, "none", tag))
                 conn.commit()
                 conn.close()
                 return tag_type
@@ -282,20 +354,22 @@ class DirgWebDb(object):
                 response = c.fetchone()
                 password_count = response[0]
                 conn.close()
-                return password_count == 1
+                return password_count == 1, None
             elif email is None:
                 sql = 'SELECT dwu.email FROM dirg_web_user dwu inner join dirg_web_uid dw_uid on dwu.id = ' \
                       'dw_uid.dirg_web_user_id WHERE dw_uid.uid = ? and valid = ? and verify = ?'
                 c.execute(sql, (uid, 1, 0))
                 response = c.fetchone()
+                if response is None:
+                    return False, None
                 email = response[0]
                 conn.close()
-                return email
+                return True, email
             else:
-                self.create_validation_exception("dirg_web_user", "", "email", "E-mail + " +
-                                                                               email + " do not exist!")
+                return False, None
+
             conn.close()
-            return 0
+            return False, None
         finally:
             conn.close()
 
@@ -324,6 +398,20 @@ class DirgWebDb(object):
                                                                                email + " do not exist!")
             conn.close()
             return 0
+        finally:
+            conn.close()
+
+    def email_from_tag(self, tag):
+        conn = self.db_connect()
+        try:
+            c = conn.cursor()
+            c.execute('SELECT email FROM dirg_web_user WHERE random_tag=? and valid = ?', (tag, 1))
+            response = c.fetchone()
+            if response is None:
+                return None
+            return response[0]
+        except Exception as ex:
+            return None
         finally:
             conn.close()
 
