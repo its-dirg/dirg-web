@@ -97,7 +97,7 @@ Please view static/test.js for more example of angular and toaster.
 
     <!-- Modal invite user-->
     <div class="modal fade" id="modalInvite" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog" >
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -163,11 +163,74 @@ Please view static/test.js for more example of angular and toaster.
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
+    <!-- Administrate users-->
+    <div class="modal fade" id="modalAdministrateUsers" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Administrate users</h4>
+            </div>
+          <div class="modal-body">
+                <table class="table table-striped">
+                    <tr>
+                        <th>
+                        </th>
+                        <th>
+                            Name/E-mail
+                        </th>
+                        <th>
+                            Admin
+                        </th>
+                        <th>
+                            Active
+                        </th>
+                        <th>
+                            Verified
+                        </th>
+                    </tr>
+                    <tr ng-repeat="user in users">
+                        <td><div ng-click="deleteUser(user.email)" class="glyphicon glyphicon-remove" style="cursor: pointer;" title="Deletes the user."></div></td>
+                        <td>
+                            {{user.forename}} {{user.surname}}<br>
+                            {{user.email}}
+                        </td>
+                        <td style="vertical-align: middle">
+                            <div class="checkbox">
+                              <label>
+                                <input type="checkbox" ng-model="admin" ng-click="changeUserAdmin(user.email)" ng-checked="user.admin == 1" >
+                              </label>
+                            </div>
+                        </td>
+                        <td style="vertical-align: middle">
+                            <div class="checkbox">
+                              <label>
+                                <input type="checkbox" ng-model="valid" ng-click="changeUserValid(user.email, this.checked)" ng-checked="user.valid == 1" >
+                              </label>
+                            </div>
+                        </td>
+                        <td style="vertical-align: middle">
+                            <div class="checkbox">
+                              <label>
+                                <input type="checkbox" disabled="disabled" ng-checked="user.verify == 0" >
+                              </label>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
 </%block>
 
 <%block name="footer">
     </div>
     <script type="text/javascript" src="/static/information.js"></script>
-
     ${parent.footer()}
 </%block>

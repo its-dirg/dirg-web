@@ -12,8 +12,6 @@ __author__ = 'haho0032'
 
 
 class Information:
-
-
     def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods, sqlite_db,
                  email_config, sphandler):
         """
@@ -45,6 +43,7 @@ class Information:
         self.information_path = "information/"
         self.file_ending = ".html"
         self.menu_file = "menu/menu.json"
+        self.banned_users = "banned_users"
         self.urls = [
             "",
             "save",
@@ -55,8 +54,15 @@ class Information:
             "signout",
             "invite",
             "verify",
-            "verifypass"
+            "verifypass",
+            "adminUsers",
+            "changeUserAdmin",
+            "changeUserValid",
+            "deleteuser"
         ]
+
+        if self.banned_users not in self.cache:
+            self.cache[self.banned_users] = {}
 
     def verify(self, path):
         for url in self.urls:
@@ -84,6 +90,14 @@ class Information:
             return self.handle_verify(path)
         if path == "verifypass":
             return self.handle_verifypass()
+        if path == "adminUsers":
+            return self.handle_admin_users()
+        if path == "changeUserAdmin":
+            return self.change_user_admin()
+        if path == "changeUserValid":
+            return self.change_user_valid()
+        if path == "deleteuser":
+            return self.delete_user()
         else:
             return self.handle_index()
 
@@ -107,7 +121,8 @@ class Information:
             if success:
                 if email is not None:
                     self.session.email(email)
-                self.session.sign_in(uid, SecureSession.SP)
+                user = db.user(email)
+                self.session.sign_in(uid, SecureSession.SP, user)
                 return self.handle_index()
 
         except Exception as ex:
@@ -125,20 +140,24 @@ class Information:
     def handle_idpverify(self, email, tag, uid):
         try:
             db = self.dirg_web_db()
-            if email is None or db.email_exists(email) :
-                if email is None:
-                    email = db.email_from_tag(tag)
-                type = db.verify_user(email, tag)
-                if type not in [self.type_idp, self.type_password]:
-                    message = "Invalid verification url. Please request for a new."
-                else:
-
-                    db.add_uid_user(email, uid)
-                    self.session.email(email)
-                    self.session.sign_in(uid, SecureSession.SP)
-                    message = "You have successfully validated your e-mail and is now signed in."
+            success, email = db.validate_uid(None, uid)
+            if success:
+              message = "You have already connected this IdP user with an e-mail in this application. Please contact an administrator."
             else:
-                message = "Your validation failed! You must type the correct e-mail address."
+                if email is None or db.email_exists(email):
+                    if email is None:
+                        email = db.email_from_tag(tag)
+                    type = db.verify_user(email, tag)
+                    if type not in [self.type_idp, self.type_password]:
+                        message = "Invalid verification url. Please request for a new."
+                    else:
+                        db.add_uid_user(email, uid)
+                        self.session.email(email)
+                        user = db.user(email)
+                        self.session.sign_in(uid, SecureSession.SP, user)
+                        message = "You have successfully validated your e-mail and is now signed in."
+                else:
+                    message = "Your validation failed! You must type the correct e-mail address."
         except:
             message = "Your validation failed! You must type the correct e-mail address."
         resp = Response(mako_template="verify.mako",
@@ -158,7 +177,7 @@ class Information:
         tag = ""
         try:
             db = self.dirg_web_db()
-            if "email" not in self.parameters or "password1" not in self.parameters or "password2" not in self.parameters\
+            if "email" not in self.parameters or "password1" not in self.parameters or "password2" not in self.parameters \
                 or "tag" not in self.parameters:
                 message = "Invalid verification request!"
                 type = "none"
@@ -227,7 +246,7 @@ class Information:
                 if type == self.type_idp:
                     return self.sphandler.handle_sp_requests(self.environ, self.start_response,
                                                              self.sphandler.sp_conf.SPVERIFYBASE,
-                                                             self.session,parameters, self)
+                                                             self.session, parameters, self)
 
         resp = Response(mako_template="verify.mako",
                         template_lookup=self.lookup,
@@ -242,6 +261,8 @@ class Information:
 
     def handle_invite(self):
         try:
+            if not self.session.is_allowed_to_invite(self.cache[self.banned_users]):
+                return self.service_error("You are not authorized!")
             forename = ""
             surname = ""
             if "email" not in self.parameters or "type" not in self.parameters:
@@ -310,10 +331,10 @@ class Information:
             return self.service_error("Invalid request!");
         except Exception as ex:
             return self.service_error("Invalid request!")
-        
+
 
     def handle_save(self):
-        if not self.session.is_allowed_to_edit_page():
+        if not self.session.is_allowed_to_edit_page(self.cache[self.banned_users]):
             return self.service_error("You are not authorized!")
         try:
             page = None
@@ -355,14 +376,15 @@ class Information:
         try:
             if "user" in self.parameters and "password" in self.parameters:
                 success = self.session.sign_in(self.parameters["user"], SecureSession.USERPASSWORD,
-                                               self.parameters["password"])
+                                               None, self.parameters["password"])
                 if not success:
                     db = self.dirg_web_db()
                     valid = db.validate_password(self.parameters["user"], self.parameters["password"])
+                    user = db.user(self.parameters["user"])
                     success = self.session.sign_in(self.parameters["user"], SecureSession.DBPASSWORD,
-                                               self.parameters["password"])
+                                                   user, self.parameters["password"])
                 if success:
-                    return self.return_json(json.dumps(self.session.user_authentication()))
+                    return self.return_json(json.dumps(self.session.user_authentication(self.cache[self.banned_users])))
             return self.service_error("You are not authorized!")
         except Exception:
             return self.service_error("The application is not working, please contact an administrator.")
@@ -371,14 +393,14 @@ class Information:
     def handle_signout(self):
         try:
             self.session.sign_out()
-            return self.return_json(json.dumps(self.session.user_authentication()))
+            return self.return_json(json.dumps(self.session.user_authentication(self.cache[self.banned_users])))
         except Exception:
             return self.service_error("The application is not working, please contact an administrator.")
 
 
     def handle_auth(self):
         try:
-            auth = self.session.user_authentication();
+            auth = self.session.user_authentication(self.cache[self.banned_users]);
             auth["authMethods"] = self.auth_methods;
             return self.return_json(json.dumps(auth))
         except Exception:
@@ -388,7 +410,7 @@ class Information:
         try:
             text = open(file_).read()
             self.cache["menu"] = json.loads(text)
-            return self.return_json(json.dumps(self.filter_menu(self.cache["menu"])))
+            return self.return_json(json.dumps(self.filter_menu(copy.deepcopy(self.cache["menu"]))))
         except IOError:
             return self.service_error("No menu file can be found!")
 
@@ -417,13 +439,13 @@ class Information:
         if menu is not None:
             for tmp_element in menu:
                 element = copy.deepcopy(tmp_element)
-                if self.session.menu_allowed(element):
+                if self.session.menu_allowed(element, self.cache[self.banned_users]):
                     tmp_menu.append(element)
                     if "children" in element:
                         children = []
                         for tmp_child in element["children"]:
                             child = copy.deepcopy(tmp_child)
-                            if self.session.menu_allowed(child):
+                            if self.session.menu_allowed(child, self.cache[self.banned_users]):
                                 children.append(child)
                         element["children"] = children
         return tmp_menu
@@ -431,7 +453,7 @@ class Information:
     def validate_page(self, page):
         if "menu" not in self.cache or self.cache["menu"] is None:
             self.handle_menu(self.menu_file)
-        menu = self.cache["menu"]
+        menu = copy.deepcopy(self.cache["menu"])
         menu = self.filter_menu(menu)
         page_ok = False
         if "left" in menu:
@@ -468,3 +490,79 @@ class Information:
         message = {"ExceptionMessage": message}
         resp = ServiceError(json.dumps(message))
         return resp(self.environ, self.start_response)
+
+    def change_user_valid(self):
+        try:
+            if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
+                return self.service_error("You are not authorized!")
+            email = None
+            valid = -1
+            if "email" in self.parameters:
+                email = self.parameters["email"]
+            if "valid" in self.parameters:
+                valid = self.parameters["valid"]
+
+            if email is not None and (valid == 0 or valid == 1):
+                db = self.dirg_web_db()
+                if db.email_exists(email):
+                    db.valid_user(email, valid)
+                    if valid == 1:
+                        if email in self.cache[self.banned_users]:
+                            del self.cache[self.banned_users][email]
+                        return self.return_json("User (" + email + ") is now a valid user.")
+                    else:
+                        self.cache[self.banned_users][email] = True
+                        return self.return_json("User (" + email + ") is banned from the application.")
+            return self.service_error("Invalid request!")
+        except Exception as ex:
+            return self.service_error("Invalid request!")
+
+    def delete_user(self):
+        try:
+            if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
+                return self.service_error("You are not authorized!")
+            email = None
+            if "email" in self.parameters:
+                email = self.parameters["email"]
+            if email is not None:
+                db = self.dirg_web_db()
+                if db.email_exists(email):
+                    self.cache[self.banned_users][email] = True
+                    db.delete_user(email)
+                    return self.return_json("User (" + email + ") is now removed from the application.")
+            return self.service_error("Invalid request!")
+        except Exception as ex:
+            return self.service_error("Invalid request!")
+
+    def change_user_admin(self):
+        try:
+            if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
+                return self.service_error("You are not authorized!")
+            email = None
+            admin = -1
+            if "email" in self.parameters:
+                email = self.parameters["email"]
+            if "admin" in self.parameters:
+                admin = self.parameters["admin"]
+
+            if email is not None and (admin == 0 or admin == 1):
+                db = self.dirg_web_db()
+                if db.email_exists(email):
+                    db.admin_user(email, admin)
+                    if admin == 1:
+                        return self.return_json("User (" + email + ") is now administrator.")
+                    else:
+                        return self.return_json("User (" + email + ") is no longer administrator.")
+            return self.service_error("Invalid request!")
+        except Exception as ex:
+            return self.service_error("Invalid request!")
+
+    def handle_admin_users(self):
+        try:
+            if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
+                return self.service_error("You are not authorized!")
+            db = self.dirg_web_db()
+            users = db.list_all_users()
+            return self.return_json(json.dumps(users))
+        except Exception as ex:
+            return self.service_error("Invalid request!")

@@ -1,3 +1,8 @@
+.modal-dialog.large {
+    min-width: 800px;
+    width: 80%;
+}
+
 .errormessage{
     color: red;
 }

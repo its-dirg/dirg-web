@@ -11,6 +11,15 @@
             saveInformation: function (page, html) {
                 return $http.post("/save", { "page": page, "html": html});
             },
+            changeUserAdmin: function (email, admin) {
+                return $http.post("/changeUserAdmin", { "email": email, "admin": admin});
+            },
+            changeUserValid: function (email, valid) {
+                return $http.post("/changeUserValid", { "email": email, "valid": valid});
+            },
+            deleteUser: function (email) {
+                return $http.post("/deleteuser", { "email": email});
+            },
             signin: function (user, password) {
                 return $http.get("/signin", {params: { "user": user, "password": password}});
             },
@@ -21,6 +30,9 @@
                     "email": email,
                     "type": type
                 }});
+            },
+            adminUsers: function() {
+                return $http.get("/adminUsers");
             },
             signout: function () {
                 return $http.post("/signout", {});
@@ -46,19 +58,24 @@
         $scope.allowSignout = true;
         //Allows the user to edit pages.
         $scope.allowedEdit = false;
+        //Allows the user to edit users.
+        $scope.allowUserChange = false;
         //The headline for the page.
         $scope.headline = "";
         //True if the user is authenticated, otherwise false.
         $scope.authenticated = false;
         //The current menu for the user.
         $scope.menu = "";
+        //Users that can be administrated.
+        $scope.users = "";
         //A list with all authentication methods.
         $scope.authMethods = [];
         //The chosen authentication method.
         $scope.authMethod = ""
         //Set to true if you want to allow menu configuration.
-        //This functionality is not fully implemented and do not work!
         $scope.allowConfig = false;
+        //Set to true if you want to allow user to invite other users.
+        $scope.allowInvite = false;
         //True if the user is changing the menu configurations.
         //This functionality is not fully implemented and do not work!
         $scope.configMenu = false;
@@ -113,7 +130,26 @@
             //toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
-     var inviteSuccessCallback = function (data, status, headers, config) {
+        var adminUsersSuccessCallback = function (data, status, headers, config) {
+            $scope.users = data;
+            $('#modalAdministrateUsers').modal('show');
+        };
+
+        var changeUserAdminSuccessCallback = function (data, status, headers, config) {
+            toaster.pop('success', "Notification", data);
+        };
+
+        var changeUserValidSuccessCallback = function (data, status, headers, config) {
+            toaster.pop('success', "Notification", data);
+        };
+
+        var deleteUserSuccessCallback = function (data, status, headers, config) {
+            toaster.pop('success', "Notification", data);
+            informationFactory.adminUsers().success(adminUsersSuccessCallback).error(errorCallback);
+        };
+
+
+        var inviteSuccessCallback = function (data, status, headers, config) {
          toaster.pop('success', "Notification", data);
             $('#modalInvite').modal('hide');
         };
@@ -170,10 +206,12 @@
                 $scope.authMethods = authResponse.authMethods;
                 $scope.authMethod = $scope.authMethods[0].type;
             }
+            $scope.allowInvite = authResponse.allowInvite == "true";
             $scope.allowConfig = authResponse.allowConfig == "true";
             $scope.allowedEdit = authResponse.allowedEdit == "true";
             $scope.allowedSignout = authResponse.allowSignout == "true";
             $scope.authenticated = authResponse.authenticated == "true";
+            $scope.allowUserChange = authResponse.allowUserChange == "true";
             $scope.allowChangePassword = authResponse.allowChangePassword == "true";
         }
 
@@ -182,7 +220,7 @@
             password = this.password
             this.user = ""
             this.password = ""
-            informationFactory.signin(this.user, this.password).success(signinSuccessCallback).error(errorCallback);
+            informationFactory.signin(user, password).success(signinSuccessCallback).error(errorCallback);
         };
 
 
@@ -191,13 +229,13 @@
         };
 
         $scope.submitInvite = function () {
-            forname = this.forname;
+            forename = this.forename;
             surname = this.surname;
             email = this.email;
-            this.forname = "";
+            this.forename = "";
             this.surname = "";
             this.email = "";
-            informationFactory.invite(this.forename, this.surname, this.email, this.invite_prop.value).success(inviteSuccessCallback).error(errorCallback);
+            informationFactory.invite(forename, surname, email, this.invite_prop.value).success(inviteSuccessCallback).error(errorCallback);
         };
 
         $scope.closeSigning = function () {
@@ -217,6 +255,36 @@
         $scope.invite = function () {
             $('#modalInvite').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
+        };
+
+        $scope.adminUsers = function () {
+            informationFactory.adminUsers().success(adminUsersSuccessCallback).error(errorCallback);
+        };
+
+        $scope.deleteUser = function(email) {
+            bootbox.confirm("Are you sure you want to delete the user with email " + email + "?",
+                informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback)
+            );
+        }
+
+        $scope.changeUserAdmin = function (email) {
+            admin = -1;
+            if (this.admin == true) {
+                admin = 1;
+            } else {
+                admin = 0;
+            }
+            informationFactory.changeUserAdmin(email, admin).success(changeUserAdminSuccessCallback).error(errorCallback);
+        };
+
+        $scope.changeUserValid = function (email, valid) {
+            valid = -1;
+            if (this.valid == true) {
+                valid = 1;
+            } else {
+                valid = 0;
+            }
+            informationFactory.changeUserValid(email, valid).success(changeUserValidSuccessCallback).error(errorCallback);
         };
 
         $scope.changePassword = function () {

@@ -34,8 +34,10 @@ class SecureSession(Session):
     MENU_CONSTRUCT = "construct"
 
     ALLOW_CHANGEPASSWORD = "allowChangePassword"
+    ALLOW_INVITE = "allowInvite"
     ALLOW_CONFIG = "allowConfig"
     ALLOW_EDIT = "allowedEdit"
+    ALLOW_USER_CHANGE = "allowUserChange"
     ALLOW_SIGN_OUT = "allowSignout"
     ALLOW_TRUE = "true"
     ALLOW_FALSE = "false"
@@ -76,22 +78,38 @@ class SecureSession(Session):
     def is_administrator(self):
         return self[self.ADMINISTRATOR]
 
-    def is_allowed_to_invite(self):
+    def is_allowed_to_change_user(self, banned_users):
+        if self.email() in banned_users:
+            return False
         if self.is_authenticated() and self.is_administrator():
             return True
         return False
 
-    def is_allowed_to_change_password(self):
+    def is_allowed_to_invite(self, banned_users):
+        if self.email() in banned_users:
+            return False
+        if self.is_authenticated() and self.is_administrator():
+            return True
+        return False
+
+    def is_allowed_to_change_password(self, banned_users):
+        if self.email() in banned_users:
+            return False
         if self.is_authenticated() and self[self.AUTHENTICATION_TYPE] == self.USERPASSWORD:
             return True
         return False
 
-    def is_allowed_to_edit_page(self):
+    def is_allowed_to_edit_page(self, banned_users):
+        if self.email() in banned_users:
+            return False
         if self.is_authenticated() and self.is_administrator():
             return True
         return False
 
-    def menu_allowed(self, menu):
+    def menu_allowed(self, menu, banned_users):
+        if self.email() in banned_users:
+            return False
+
         if menu[self.MENU_TYPE] == self.MENU_PUBLIC:
             return True
 
@@ -102,11 +120,15 @@ class SecureSession(Session):
             return True
         return False
 
-    def sign_in(self, uid, type, password = None):
+    def sign_in(self, uid, type, user = None, password = None):
         self[self.AUTHENTICATED] = False;
+        self[self.ADMINISTRATOR] = 0
+        self[self.AUTHENTICATION_TYPE] = None
         if type == self.SP:
             self[self.AUTHENTICATION_TYPE] = type
             self[self.AUTHENTICATED] = True
+            if user is not None and "admin" in user and user["admin"] == 1:
+                self[self.ADMINISTRATOR] = True
         elif type == self.USERPASSWORD and uid in self.username_password and self.username_password[uid] == password:
             self[self.AUTHENTICATION_TYPE] = type
             self[self.AUTHENTICATED] = True
@@ -114,9 +136,8 @@ class SecureSession(Session):
         if type == self.DBPASSWORD:
             self[self.AUTHENTICATION_TYPE] = self.USERPASSWORD
             self[self.AUTHENTICATED] = True
-        else:
-            self[self.AUTHENTICATION_TYPE] = None
-        #self[self.ADMINISTRATOR] = administrator
+            if user is not None and "admin" in user and user["admin"] == 1:
+                self[self.ADMINISTRATOR] = True
         return self[self.AUTHENTICATED]
 
     def sign_out(self):
@@ -125,21 +146,29 @@ class SecureSession(Session):
         #    return
         self[self.AUTHENTICATED] = False
         self[self.ADMINISTRATOR] = False
+        self[self.AUTHENTICATION_TYPE] = None
+        self[self.EMAIL] = None
+        self[self.VERIFICATION_TAG] = None
+        self[self.VERIFICATION] = None
 
-    def user_authentication(self):
+    def user_authentication(self, banned_users):
         auth_object = {}
         auth_object[self.ALLOW_CHANGEPASSWORD] = self.ALLOW_FALSE
         auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_TRUE
         auth_object[self.ALLOW_CONFIG] = self.ALLOW_FALSE
-        if self[self.AUTHENTICATED]:
+        auth_object[self.ALLOW_INVITE] = self.ALLOW_FALSE
+        auth_object[self.ALLOW_USER_CHANGE] = self.ALLOW_FALSE
+        if self[self.AUTHENTICATED] and self.email() not in banned_users:
             auth_object[self.AUTHENTICATED] = self.ALLOW_TRUE
         else:
             auth_object[self.AUTHENTICATED] = self.ALLOW_FALSE
-        if self[self.ADMINISTRATOR]:
+        if self[self.ADMINISTRATOR] and self.email() not in banned_users:
             auth_object[self.ALLOW_EDIT] = self.ALLOW_TRUE
+            auth_object[self.ALLOW_INVITE] = self.ALLOW_TRUE
+            auth_object[self.ALLOW_USER_CHANGE] = self.ALLOW_TRUE
         else:
             auth_object[self.ALLOW_EDIT] = self.ALLOW_FALSE
-        if self.is_allowed_to_change_password():
+        if self.is_allowed_to_change_password(banned_users):
             auth_object[self.ALLOW_CHANGEPASSWORD] = self.ALLOW_TRUE
         #Will not handle sign out for SSO with SAML!
         #if self[self.AUTHENTICATION_TYPE] == self.SP:
@@ -176,7 +205,7 @@ class DirgWebDb(object):
             self.create_validation_exception(table_name, row_id, column_name, message)
 
     def validate_email(self, table_name, row_id, column_name, email):
-        if not validate_email(email,verify=True):
+        if not validate_email(email):#,verify=True): A bit to slow
             message = "The email " + email + " is is not valid!"
             self.create_validation_exception(table_name, row_id, column_name, message)
 
@@ -483,7 +512,6 @@ class DirgWebDb(object):
             email = unicode(email, "UTF-8")
         if valid != 1:
             valid = 0
-        self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
             c = conn.cursor()
@@ -505,7 +533,6 @@ class DirgWebDb(object):
             email = unicode(email, "UTF-8")
         if admin != 1:
             admin = 0
-        self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
             c = conn.cursor()
@@ -514,6 +541,25 @@ class DirgWebDb(object):
             count = response[0]
             if count == 1:
                 c.execute("UPDATE dirg_web_user SET admin = ? WHERE email=?", (admin, email))
+                conn.commit()
+            else:
+                self.create_validation_exception("dirg_web_user", "", "email", "E-mail + " +
+                                                                               email + " do not exist!")
+            conn.close()
+        finally:
+            conn.close()
+
+    def delete_user(self, email):
+        if not isinstance(email, unicode):
+            email = unicode(email, "UTF-8")
+        conn = self.db_connect()
+        try:
+            c = conn.cursor()
+            c.execute('SELECT count(*) FROM dirg_web_user WHERE email=?', (email, ))
+            response = c.fetchone()
+            count = response[0]
+            if count == 1:
+                c.execute("DELETE FROM dirg_web_user WHERE email=?", (email, ))
                 conn.commit()
             else:
                 self.create_validation_exception("dirg_web_user", "", "email", "E-mail + " +
@@ -566,10 +612,10 @@ class DirgWebDb(object):
                 response = response[0]
                 response_dict["rowid"] = response[0]
                 response_dict["id"] = response[1]
-                response_dict["email"] = unicode(response[2], "UTF-8")
+                response_dict["email"] = unicode(response[2].encode("UTF-8"), "UTF-8")
                 response_dict["password"] = response[3]
-                response_dict["forename"] = unicode(response[4], "UTF-8")
-                response_dict["surname"] = unicode(response[5], "UTF-8")
+                response_dict["forename"] = unicode(response[4].encode("UTF-8"), "UTF-8")
+                response_dict["surname"] = unicode(response[5].encode("UTF-8"), "UTF-8")
                 response_dict["verify"] = response[6]
                 response_dict["valid"] = response[7]
                 response_dict["random_tag"] = response[8]

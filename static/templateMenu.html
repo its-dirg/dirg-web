@@ -34,7 +34,8 @@
     <a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-pencil" title="{{menu.configure}}"  ng-show="allowConfig == true && configMenu == false && authenticated == true" ng-click="editMenu()"></a>
     <a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-floppy-save" title="{{menu.configuresave}}"  ng-show="allowConfig == true && configMenu == true && authenticated == true" ng-click="saveMenu()"></a>
   </li>
-  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle" ng-click="invite();">{{menu.invite}}</a></li>
+  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle" ng-click="adminUsers();" ng-show="authenticated == true && allowUserChange == true">{{menu.adminUsers}}</a></li>
+  <li><a href="#" data-toggle="dropdown" class="dropdown-toggle" ng-click="invite();" ng-show="authenticated == true && allowInvite == true">{{menu.invite}}</a></li>
   <li><a href="#" data-toggle="dropdown" class="dropdown-toggle" ng-click="changePassword();" ng-show="allowChangePassword == true">{{menu.changepassword}}</a></li>
   <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-in" title="{{menu.signin}}" ng-show="authenticated == false" ng-click="signin();"></a></li>
   <li><a href="#" data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-log-out" title="{{menu.signout}}" ng-show="authenticated == true && allowedSignout == true" ng-click="signout();"></a></li>
