@@ -21,6 +21,7 @@ class VerifyDirgWebDb(unittest.TestCase):
 
     def test_verify_email(self):
         db = DirgWebDb("test_db", "/verify", "tag", "type", "pass", "idp")
+        ''' Not as hard e-mail control anymore
         try:
             db.validate_email("table_name", "row_id", "column_name", "notanemail@novalidurl.qwerty")
             self.fail("Should raise DirgWebDbValidationException")
@@ -28,6 +29,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             self.assertTrue("notanemail@novalidurl.qwerty" in ex.message)
         except Exception as ex:
             self.fail(ex.message)
+        '''
         try:
             db.validate_email("table_name", "row_id", "column_name", "hans.horberg@umu.se")
         except Exception as ex:
@@ -105,7 +107,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             self.assertTrue("X" in ex.message)
         except Exception as ex:
             self.fail(ex.message)
-
+        '''Not so hard e-mail control anymore.
         try:
             db = DirgWebDb("test_db", "/verify", "tag", "type", "pass", "idp")
             db.clear_db()
@@ -115,6 +117,7 @@ class VerifyDirgWebDb(unittest.TestCase):
             self.assertTrue("hans.horberg@umu.qwerty" in ex.message)
         except Exception as ex:
             self.fail(ex.message)
+        '''
 
         users = db.list_all_users()
         self.assertTrue(users is not None)

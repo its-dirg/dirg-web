@@ -1,3 +1,4 @@
+# coding=utf-8
 __author__ = 'haho0032'
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_HTTP_POST

@@ -5,8 +5,7 @@ from saml2.metadata import create_metadata_string
 from dirg_web.InformationHandler import Information
 
 from dirg_util.log import create_logger
-from dirg_util.session import Session
-from dirg_util.http_util import HttpHandler, Response
+from dirg_util.http_util import HttpHandler
 
 
 #External imports

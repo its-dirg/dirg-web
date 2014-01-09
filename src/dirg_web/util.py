@@ -3,10 +3,10 @@ from os.path import exists
 import base64
 from dirg_util.session import Session
 import logging
-import random
 import string
 import hashlib
 from validate_email import validate_email
+from Crypto.Random import random
 
 import sqlite3
 
@@ -15,14 +15,16 @@ __author__ = 'haho0032'
 #Add a logger for this class.
 logger = logging.getLogger("dirg_web_util")
 
+
 class UnknownAuthenticationType(Exception):
     pass
+
 
 class SecureSession(Session):
     SP = "sp"
     EMAIL = "email"
-    VERIFICATION ="verification"
-    VERIFICATION_TAG ="verification_tag"
+    VERIFICATION = "verification"
+    VERIFICATION_TAG = "verification_tag"
     USERPASSWORD = "userpassword"
     DBPASSWORD = "dbpassword"
     AUTHENTICATED = "authenticated"
@@ -107,11 +109,11 @@ class SecureSession(Session):
         return False
 
     def menu_allowed(self, menu, banned_users):
-        if self.email() in banned_users:
-            return False
-
         if menu[self.MENU_TYPE] == self.MENU_PUBLIC:
             return True
+        else:
+            if self.email() in banned_users:
+                return False
 
         if menu[self.MENU_TYPE] == self.MENU_PRIVATE and self.is_authenticated():
             return True
@@ -120,20 +122,20 @@ class SecureSession(Session):
             return True
         return False
 
-    def sign_in(self, uid, type, user = None, password = None):
-        self[self.AUTHENTICATED] = False;
+    def sign_in(self, uid, _type, user=None, password=None):
+        self[self.AUTHENTICATED] = False
         self[self.ADMINISTRATOR] = 0
         self[self.AUTHENTICATION_TYPE] = None
-        if type == self.SP:
-            self[self.AUTHENTICATION_TYPE] = type
+        if _type == self.SP:
+            self[self.AUTHENTICATION_TYPE] = _type
             self[self.AUTHENTICATED] = True
             if user is not None and "admin" in user and user["admin"] == 1:
                 self[self.ADMINISTRATOR] = True
-        elif type == self.USERPASSWORD and uid in self.username_password and self.username_password[uid] == password:
-            self[self.AUTHENTICATION_TYPE] = type
+        elif _type == self.USERPASSWORD and uid in self.username_password and self.username_password[uid] == password:
+            self[self.AUTHENTICATION_TYPE] = _type
             self[self.AUTHENTICATED] = True
             self[self.ADMINISTRATOR] = True
-        if type == self.DBPASSWORD:
+        if _type == self.DBPASSWORD:
             self[self.AUTHENTICATION_TYPE] = self.USERPASSWORD
             self[self.AUTHENTICATED] = True
             if user is not None and "admin" in user and user["admin"] == 1:
@@ -152,12 +154,9 @@ class SecureSession(Session):
         self[self.VERIFICATION] = None
 
     def user_authentication(self, banned_users):
-        auth_object = {}
-        auth_object[self.ALLOW_CHANGEPASSWORD] = self.ALLOW_FALSE
-        auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_TRUE
-        auth_object[self.ALLOW_CONFIG] = self.ALLOW_FALSE
-        auth_object[self.ALLOW_INVITE] = self.ALLOW_FALSE
-        auth_object[self.ALLOW_USER_CHANGE] = self.ALLOW_FALSE
+        auth_object = {self.ALLOW_CHANGEPASSWORD: self.ALLOW_FALSE, self.ALLOW_SIGN_OUT: self.ALLOW_TRUE,
+                       self.ALLOW_CONFIG: self.ALLOW_FALSE, self.ALLOW_INVITE: self.ALLOW_FALSE,
+                       self.ALLOW_USER_CHANGE: self.ALLOW_FALSE}
         if self[self.AUTHENTICATED] and self.email() not in banned_users:
             auth_object[self.AUTHENTICATED] = self.ALLOW_TRUE
         else:
@@ -170,38 +169,39 @@ class SecureSession(Session):
             auth_object[self.ALLOW_EDIT] = self.ALLOW_FALSE
         if self.is_allowed_to_change_password(banned_users):
             auth_object[self.ALLOW_CHANGEPASSWORD] = self.ALLOW_TRUE
-        #Will not handle sign out for SSO with SAML!
+            #Will not handle sign out for SSO with SAML!
         #if self[self.AUTHENTICATION_TYPE] == self.SP:
         #    auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
         return auth_object
 
+
 class DirgWebDbValidationException(Exception):
     pass
 
-class DirgWebDb(object):
 
+class DirgWebDb(object):
     def __init__(self, db_name, verify_path, verify_param, type_param, password, idp):
         self.db_name = db_name.replace(".db", "") + ".db"
         self.verify_path = verify_path
         self.verify_param = verify_param
         self.type_param = type_param
-        self.password =password
-        self.idp =idp
+        self.password = password
+        self.idp = idp
         self.create_db()
 
-    def create_validation_exception(self, table_name,row_id, column_name, message):
-        log_message =   "Database: + " + self.db_name + " \n" +\
-                    "Table: " + table_name + "\n " +\
-                    "Row: " + row_id + "\n " +\
-                    "Column: " + column_name + "\n " +\
-                    "Message: " + message + "\n "
+    def create_validation_exception(self, table_name, row_id, column_name, message):
+        log_message = "Database: + " + self.db_name + " \n" + \
+                      "Table: " + table_name + "\n " + \
+                      "Row: " + row_id + "\n " + \
+                      "Column: " + column_name + "\n " + \
+                      "Message: " + message + "\n "
         logging.error(log_message)
         raise DirgWebDbValidationException(message)
 
-    def validate_text_size(self, table_name, row_id, column_name, max, min, text):
-        if not (min <= len(text) <= max):
-            message = "The length of the text " + text + " must be lesser or equal to " + str(max) +\
-                      " and greater or euqal to " + str(min)
+    def validate_text_size(self, table_name, row_id, column_name, _max, _min, text):
+        if not (_min <= len(text) <= _max):
+            message = "The length of the text " + text + " must be lesser or equal to " + str(_max) + \
+                      " and greater or euqal to " + str(_min)
             self.create_validation_exception(table_name, row_id, column_name, message)
 
     def validate_email(self, table_name, row_id, column_name, email):
@@ -214,35 +214,35 @@ class DirgWebDb(object):
         return conn
 
     def create_db(self):
-            if (not exists(self.db_name)):
-                conn = self.db_connect()
-                try:
-                    c = conn.cursor()
-                    c.execute('''CREATE TABLE dirg_web_user (
+        if not exists(self.db_name):
+            conn = self.db_connect()
+            try:
+                c = conn.cursor()
+                c.execute('''CREATE TABLE dirg_web_user (
                                                               id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                              email text unique,
-                                                              password text,
-                                                              forename text,
-                                                              surname text,
-                                                              verify integer,
-                                                              valid integer,
-                                                              random_tag text,
-                                                              tag_type text,
-                                                              admin integer
+                                                              email TEXT UNIQUE,
+                                                              password TEXT,
+                                                              forename TEXT,
+                                                              surname TEXT,
+                                                              verify INTEGER,
+                                                              valid INTEGER,
+                                                              random_tag TEXT,
+                                                              tag_type TEXT,
+                                                              admin INTEGER
                                                             )
                               ''')
-                    c.execute('''CREATE TABLE dirg_web_uid (
+                c.execute('''CREATE TABLE dirg_web_uid (
                                                               id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                              uid text,
-                                                              dirg_web_user_id integer,
+                                                              uid TEXT,
+                                                              dirg_web_user_id INTEGER,
                                                               FOREIGN KEY(dirg_web_user_id) REFERENCES dirg_web_user(id)
 
                                                             )
                               ''')
-                    conn.commit()
-                    conn.close()
-                finally:
-                    conn.close()
+                conn.commit()
+                conn.close()
+            finally:
+                conn.close()
 
 
     def create_user(self, email, forename, surname):
@@ -273,14 +273,14 @@ class DirgWebDb(object):
         finally:
             conn.close()
 
-    def create_verify_user(self, email, type):
+    def create_verify_user(self, email, _type):
         if not isinstance(email, unicode):
             email = unicode(email, "UTF-8")
-        if not isinstance(type, unicode):
-            type = unicode(type, "UTF-8")
+        if not isinstance(_type, unicode):
+            _type = unicode(_type, "UTF-8")
         random_tag = None
-        if type != self.password and type != self.idp:
-            self.create_validation_exception("", "", "", "No such type " + type + " exists!")
+        if _type != self.password and _type != self.idp:
+            self.create_validation_exception("", "", "", "No such type " + _type + " exists!")
         self.validate_email("dirg_web_user", "", "email", email)
         conn = self.db_connect()
         try:
@@ -292,7 +292,7 @@ class DirgWebDb(object):
                 random_tag = "".join(random.choice(string.ascii_uppercase + string.digits) for x in range(30))
                 random_tag = base64.b64encode(random_tag)
                 c.execute('UPDATE dirg_web_user SET verify = ?, random_tag = ?, tag_type = ? WHERE email=?',
-                          (1, random_tag, type, email))
+                          (1, random_tag, _type, email))
                 conn.commit()
             else:
                 self.create_validation_exception("dirg_web_user", "", "email", "E-mail + " +
@@ -308,12 +308,12 @@ class DirgWebDb(object):
         conn = self.db_connect()
         try:
             c = conn.cursor()
-            c.execute('SELECT count(*) FROM dirg_web_user WHERE random_tag=? and tag_type <> ?',
+            c.execute('SELECT count(*) FROM dirg_web_user WHERE random_tag=? AND tag_type <> ?',
                       (tag, "none"))
             response = c.fetchone()
             count = response[0]
             if count == 1:
-                c.execute('SELECT tag_type FROM dirg_web_user WHERE random_tag=? and tag_type <> ?',
+                c.execute('SELECT tag_type FROM dirg_web_user WHERE random_tag=? AND tag_type <> ?',
                           (tag, "none"))
                 response = c.fetchone()
                 tag_type = response[0]
@@ -337,12 +337,12 @@ class DirgWebDb(object):
             count = 0
             c = conn.cursor()
             if email is not None:
-                c.execute('SELECT count(*) FROM dirg_web_user WHERE email=? and random_tag=? and tag_type <> ?',
+                c.execute('SELECT count(*) FROM dirg_web_user WHERE email=? AND random_tag=? AND tag_type <> ?',
                           (email, tag, "none"))
                 response = c.fetchone()
                 count = response[0]
             if count == 1:
-                c.execute('SELECT tag_type FROM dirg_web_user WHERE email=? and random_tag=? and tag_type <> ?',
+                c.execute('SELECT tag_type FROM dirg_web_user WHERE email=? AND random_tag=? AND tag_type <> ?',
                           (email, tag, "none"))
                 response = c.fetchone()
                 tag_type = response[0]
@@ -353,7 +353,7 @@ class DirgWebDb(object):
                 conn.close()
                 return tag_type
             elif email is None:
-                c.execute('SELECT tag_type FROM dirg_web_user WHERE random_tag=? and tag_type <> ?',
+                c.execute('SELECT tag_type FROM dirg_web_user WHERE random_tag=? AND tag_type <> ?',
                           (tag, "none"))
                 response = c.fetchone()
                 tag_type = response[0]
@@ -406,9 +406,6 @@ class DirgWebDb(object):
                 return True, email
             else:
                 return False, None
-
-            conn.close()
-            return False, None
         finally:
             conn.close()
 
@@ -417,6 +414,8 @@ class DirgWebDb(object):
             email = unicode(email, "UTF-8")
         if not isinstance(password, unicode):
             password_check = unicode(password, "UTF-8")
+        else:
+            password_check = password
         self.validate_text_size("dirg_web_user", "", "password", 30, 12, password_check)
         password = hashlib.sha224(base64.b64encode(password)).hexdigest()
         self.validate_email("dirg_web_user", "", "email", email)
@@ -427,7 +426,7 @@ class DirgWebDb(object):
             response = c.fetchone()
             count = response[0]
             if count == 1:
-                c.execute('SELECT count(*) FROM dirg_web_user WHERE email=? and password = ? and valid = ? '
+                c.execute('SELECT count(*) FROM dirg_web_user WHERE email=? AND password = ? AND valid = ? '
                           'and verify = ?', (email, password, 1, 0))
                 response = c.fetchone()
                 password_count = response[0]
@@ -445,12 +444,12 @@ class DirgWebDb(object):
         conn = self.db_connect()
         try:
             c = conn.cursor()
-            c.execute('SELECT email FROM dirg_web_user WHERE random_tag=? and valid = ?', (tag, 1))
+            c.execute('SELECT email FROM dirg_web_user WHERE random_tag=? AND valid = ?', (tag, 1))
             response = c.fetchone()
             if response is None:
                 return None
             return response[0]
-        except Exception as ex:
+        except Exception:
             return None
         finally:
             conn.close()
@@ -460,6 +459,8 @@ class DirgWebDb(object):
             email = unicode(email, "UTF-8")
         if not isinstance(password, unicode):
             password_check = unicode(password, "UTF-8")
+        else:
+            password_check = password
         self.validate_text_size("dirg_web_user", "", "password", 30, 12, password_check)
         password = hashlib.sha224(base64.b64encode(password)).hexdigest()
         self.validate_email("dirg_web_user", "", "email", email)
@@ -496,8 +497,8 @@ class DirgWebDb(object):
             if count == 1:
                 c.execute('SELECT id FROM dirg_web_user WHERE email=?', (email, ))
                 response = c.fetchone()
-                id = response[0]
-                c.execute("INSERT INTO dirg_web_uid(uid, dirg_web_user_id) VALUES (?,?)", (uid, id))
+                _id = response[0]
+                c.execute("INSERT INTO dirg_web_uid(uid, dirg_web_user_id) VALUES (?,?)", (uid, _id))
                 conn.commit()
             else:
                 self.create_validation_exception("dirg_web_user", "", "email", "E-mail + " +
@@ -602,7 +603,7 @@ class DirgWebDb(object):
         try:
             c = conn.cursor()
             query = 'SELECT rowid, dwu.id, dwu.email, dwu.password, dwu.forename, dwu.surname, dwu.verify, dwu.valid,' \
-                'dwu.random_tag, dwu.tag_type, dwu.admin FROM dirg_web_user dwu'
+                    'dwu.random_tag, dwu.tag_type, dwu.admin FROM dirg_web_user dwu'
             c.execute(query)
 
             response_list = []

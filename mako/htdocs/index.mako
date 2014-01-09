@@ -68,7 +68,7 @@ Please view static/test.js for more example of angular and toaster.
       <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="closeSigning()">&times;</button>
                 <h4 class="modal-title" id="myModalLabel">Sign in</h4>
             </div>
           <div class="modal-body">
@@ -136,7 +136,7 @@ Please view static/test.js for more example of angular and toaster.
       <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="closeChangePassword()">&times;</button>
                 <h4 class="modal-title" id="myModalLabel">Change password</h4>
             </div>
           <div class="modal-body">
@@ -157,7 +157,7 @@ Please view static/test.js for more example of angular and toaster.
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="closeChangePassword()">Cancel</button>
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
@@ -218,7 +218,7 @@ Please view static/test.js for more example of angular and toaster.
                         </td>
                     </tr>
                 </table>
-                </ul>
+
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

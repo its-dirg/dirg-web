@@ -1,3 +1,4 @@
+# coding=utf-8
 from distutils.core import setup
 
 setup(
@@ -12,6 +13,6 @@ setup(
     classifiers = ["Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Topic :: Software Development :: Libraries :: Python Modules"],
-    install_requires = ["cherrypy", "mako", "beaker", "validate_email", "pyDNS"],
+    install_requires = ["cherrypy", "mako", "beaker", "validate_email", "pyDNS", 'Crypto'],
     zip_safe=False,
 )

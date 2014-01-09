@@ -1,14 +1,10 @@
-from Carbon import List
-from dirg_web.util import SecureSession
-
+# coding=utf-8
 __author__ = 'haho0032'
 import logging
 import time
 import re
 
 from saml2.client import Saml2Client
-from oic.utils.http_util import Redirect
-
 from dirg_web.sp.util import SSO, ACS, Cache
 
 
@@ -21,17 +17,17 @@ logger = logging.getLogger(__name__)
 #The method handleIdPResponse will give the correct response after authentication.
 #The class SPAuthnMethodHandler is used to add SP authentication to the op server.
 #The class UserInfoSpHandler is used to make it possible to return the attributes collected by SP for the op_server.
-class SpHandler:
+class SpHandler(object):
     #The session name that holds the pyOpSamlProxy.client.sp.util.Cache object for the user.
     SPHANDLERSSOCACHE = "sphandlerssocache"
 
-    def __init__(self, logger, metadata, conf_dir, config_name, sp_conf):
+    def __init__(self, _logger, metadata, conf_dir, config_name, sp_conf):
         """
         Constructor for the SpHandler.
-        :param logger: A logger.
+        :param _logger: A logger.
         """
         #Log class. (see import logging)
-        self.logger = logger
+        self.logger = _logger
         #Metadata file
         self.metadata = metadata
 
@@ -42,11 +38,9 @@ class SpHandler:
         #SP configuration object. (See project pysaml2; saml2.client.Saml2Client)
         self.sp = Saml2Client(config_file="%s" % self.sp_conf_name)
         #Extra arguments for the pyOpSamlProxy.client.sp.util.SSO object.
-        self.ARGS = {}
-        #URL to SAML discovery server.
-        self.ARGS["discosrv"] = self.sp_conf.DISCOSRV
-        #URL to SAML WAYF server.
-        self.ARGS["wayf"] = self.sp_conf.WAYF
+        #discosrv = URL to SAML discovery server.
+        #wayf = URL to SAML WAYF server.
+        self.args = {"discosrv": self.sp_conf.DISCOSRV, "wayf": self.sp_conf.WAYF}
 
     @staticmethod
     def verify_timeout(timeout):
@@ -78,26 +72,16 @@ class SpHandler:
                 return True
         return False
 
-    def handleIdPResponse(self, response, cookie, session):
+    def handle_idp_response(self, response):
         """
         Takes care of the response from an Idp and saves the users attributes in a timed cache.
         :param response: Saml response. (see project pysaml2 saml2.response.AuthnResponse)
-        :param cookie: The cookies sent by the client. A cookie string, same as environ["HTTP-COOKIE"]
-        :param session: The current session for the user.
         :return: User identification
         """
         #uid = response.assertion.subject.name_id.text
         uid = response.ava['eduPersonPrincipalName']
         if isinstance(uid, list):
             uid = uid[0]
-        #spHandlerCache = self.getSpHandlerCache(uid)
-        #if spHandlerCache is None:
-        #    spHandlerCache = SpHandlerCache()
-        #    self.setSpHandlerCache(uid, spHandlerCache)
-        #spHandlerCache.uid = uid
-        #spHandlerCache.timeout = response.not_on_or_after
-        #spHandlerCache.attributes = response.ava
-        #spHandlerCache.auth = True
         return uid
 
     def handle_sp_requests(self, environ, start_response, path, session, parameters, information_handler):
@@ -123,13 +107,13 @@ class SpHandler:
         if self.SPHANDLERSSOCACHE not in session or session[self.SPHANDLERSSOCACHE] is None:
             session[self.SPHANDLERSSOCACHE] = Cache()
         if re.search(self.sp_conf.SPVERIFYBASE, path) or re.search(self.sp_conf.SPVERIFYBASEIDP, path):
-            _sso = SSO(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE], **self.ARGS)
+            _sso = SSO(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE], **self.args)
             return _sso.do()
         for regex in self.sp_conf.ASCVERIFYPOSTLIST:
             match = re.search(regex, path)
             if match is not None:
                 acs = ACS(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE])
-                uid = self.handleIdPResponse(acs.post(), environ["HTTP_COOKIE"], session)
+                uid = self.handle_idp_response(acs.post())
                 if session.is_verification():
                     session.verification(False)
                     return information_handler.handle_idpverify(session.email(), session.verification_tag(), uid)
@@ -140,11 +124,10 @@ class SpHandler:
             match = re.search(regex, path)
             if match is not None:
                 acs = ACS(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE])
-                uid = self.handleIdPResponse(acs.redirect(), environ["HTTP_COOKIE"], session)
+                uid = self.handle_idp_response(acs.redirect())
                 if session.is_verification():
                     session.verification(False)
                     return information_handler.handle_idpverify(session.email(), session.verification_tag(), uid)
                 else:
                     #session.sign_in(uid, SecureSession.SP)
                     return information_handler.signin_idp(uid)
-

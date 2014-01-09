@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 __author__ = 'haho0032'
 from dirg_web.sp.saml import Service
 from urlparse import parse_qs
@@ -20,7 +21,8 @@ from saml2.s_utils import UnsupportedBinding
 from saml2.s_utils import sid
 from saml2.s_utils import rndstr
 
-class ECP_response(object):
+
+class EcpResponse(object):
     code = 200
     title = 'OK'
 
@@ -41,8 +43,9 @@ class Cache(object):
         self.outstanding_queries = {}
         self.relay_state = {}
 
+
 class SSO(object):
-    def __init__(self, sp, environ, start_response,logger, cache=None,
+    def __init__(self, sp, environ, start_response, logger, cache=None,
                  wayf=None, discosrv=None, bindings=None):
         self.sp = sp
         self.environ = environ
@@ -179,14 +182,13 @@ class SSO(object):
         self.logger.info("Chosen IdP: '%s'" % idp_entity_id)
         return 0, idp_entity_id
 
-
     def _redirect_to_auth(self, _cli, entity_id, came_from, vorg_name=""):
         try:
             _binding, destination = _cli.pick_binding(
                 "single_sign_on_service", self.bindings, "idpsso",
                 entity_id=entity_id)
             self.logger.debug("binding: %s, destination: %s" % (_binding,
-                                                           destination))
+                                                                destination))
             req = _cli.create_authn_request(destination, vorg=vorg_name)
             _rstate = rndstr()
             self.cache.relay_state[_rstate] = came_from
@@ -229,7 +231,7 @@ class SSO(object):
             return response(self.environ, self.start_response)
         elif done > 0:
             self.cache.outstanding_queries[done] = came_from
-            return ECP_response(response)
+            return EcpResponse(response)
         else:
             entity_id = response
             # Do the AuthnRequest
@@ -244,7 +246,7 @@ class SSO(object):
 #  Attribute Consuming service
 # -----------------------------------------------------------------------------
 class ACS(Service):
-    def __init__(self,sp, environ, start_response, logger, cache=None, **kwargs):
+    def __init__(self, sp, environ, start_response, logger, cache=None, **kwargs):
         Service.__init__(self, environ, start_response, logger)
         self.environ = environ
         self.start_response = start_response
@@ -284,7 +286,7 @@ class ACS(Service):
             return resp(self.environ, self.start_response)
 
         #logger.info("parsed OK")
-        _resp = self.response.response
+        #_resp = self.response.response
 
         self.logger.info("AVA: %s" % self.response.ava)
 

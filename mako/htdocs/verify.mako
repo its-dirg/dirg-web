@@ -45,7 +45,7 @@ Please view static/test.js for more example of angular and toaster.
 
 <%block name="body">
 
-    % if type == "none":
+    % if _type == "none":
         <div class="verification_message">
             ${verification_message}
         <br><br>
@@ -53,7 +53,7 @@ Please view static/test.js for more example of angular and toaster.
     </div>
 
     % endif
-    % if type == "idp":
+    % if _type == "idp":
 
         <div class="verification_form">
             Please enter the e-mail address registered for you.
@@ -72,7 +72,7 @@ Please view static/test.js for more example of angular and toaster.
             </form>
         </div>
     % endif
-    % if type == "pass":
+    % if _type == "pass":
         <div class="verification_form">
             Please enter the e-mail address registered for you.
             <form action="/verifypass" class="form">

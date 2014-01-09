@@ -1,6 +1,7 @@
 /**
  * Created by haho0032 on 2013-12-02.
  */
+
     var app = angular.module('main', ['toaster']);
 
     app.factory('informationFactory', function ($http) {
@@ -16,6 +17,9 @@
             },
             changeUserValid: function (email, valid) {
                 return $http.post("/changeUserValid", { "email": email, "valid": valid});
+            },
+            changepasswd: function (password, password1, password2) {
+                return $http.post("/changepasswd", { "password": password, "password1": password1, "password2": password2});
             },
             deleteUser: function (email) {
                 return $http.post("/deleteuser", { "email": email});
@@ -71,7 +75,7 @@
         //A list with all authentication methods.
         $scope.authMethods = [];
         //The chosen authentication method.
-        $scope.authMethod = ""
+        $scope.authMethod = "";
         //Set to true if you want to allow menu configuration.
         $scope.allowConfig = false;
         //Set to true if you want to allow user to invite other users.
@@ -87,7 +91,7 @@
         $scope.tmpmenu = "";
 
 
-        $scope.inviteType = "idp_new"
+        $scope.inviteType = "idp_new";
         $scope.invite_prop = {   "type": "select",
                     "name": "Invite user to sign in with SAML.",
                     "value": "idp_new",
@@ -135,6 +139,10 @@
             $('#modalAdministrateUsers').modal('show');
         };
 
+        var adminUsersSuccessCallbackNoneModal = function (data, status, headers, config) {
+            $scope.users = data;
+        };
+
         var changeUserAdminSuccessCallback = function (data, status, headers, config) {
             toaster.pop('success', "Notification", data);
         };
@@ -143,9 +151,16 @@
             toaster.pop('success', "Notification", data);
         };
 
+        var changepasswdSuccessCallback = function (data, status, headers, config) {
+            $('#modalChangePassword').modal('hide');
+            toaster.pop('success', "Notification", data);
+        };
+
+
         var deleteUserSuccessCallback = function (data, status, headers, config) {
             toaster.pop('success', "Notification", data);
-            informationFactory.adminUsers().success(adminUsersSuccessCallback).error(errorCallback);
+            informationFactory.adminUsers().success(adminUsersSuccessCallbackNoneModal).error(errorCallback);
+
         };
 
 
@@ -164,9 +179,9 @@
             toaster.pop('error', "Notification", data["ExceptionMessage"]);
         };
 
-        $scope.errorCallback_ = function(data, status, headers, config) {
+        $scope.errorCallback_ = function (data, status, headers, config) {
             errorCallback(data, status, headers, config);
-        }
+        };
 
         $scope.getInformationFromServer = function (page, name) {
             if (page != "") {
@@ -180,13 +195,13 @@
             informationFactory.fetchMenu().success(fetchMenuSuccessCallback).error(errorCallback);
         };
 
-        $scope.setAuthMethod = function() {
+        $scope.setAuthMethod = function () {
             $scope.authMethod = this.prop.value;
-        }
+        };
 
-        $scope.setInviteType = function() {
+        $scope.setInviteType = function () {
             $scope.inviteType = this.invite_prop.value;
-        }
+        };
 
 
 
@@ -196,7 +211,7 @@
             }
         };
 
-        $scope.handleAuthResponse = function(authResponse) {
+        $scope.handleAuthResponse = function (authResponse) {
             if (authResponse.authMethods) {
                 $scope.prop = {   "type": "select",
                     "name": authResponse.authMethods[0].name,
@@ -213,25 +228,31 @@
             $scope.authenticated = authResponse.authenticated == "true";
             $scope.allowUserChange = authResponse.allowUserChange == "true";
             $scope.allowChangePassword = authResponse.allowChangePassword == "true";
-        }
+        };
 
         $scope.submitSignIn = function () {
-            user = this.user
-            password = this.password
-            this.user = ""
-            this.password = ""
+            var user = this.user;
+            var password = this.password;
+            this.user = "";
+            this.password = "";
             informationFactory.signin(user, password).success(signinSuccessCallback).error(errorCallback);
         };
 
 
         $scope.submitChangePassword = function () {
-            //informationFactory.signin(this.user, this.password).success(signinSuccessCallback).error(errorCallback);
+            var password = this.password;
+            var password1 = this.password1;
+            var password2 = this.password2;
+            this.password = "";
+            this.password1 = "";
+            this.password2 = "";
+            informationFactory.changepasswd(password, password1, password2).success(changepasswdSuccessCallback).error(errorCallback);
         };
 
         $scope.submitInvite = function () {
-            forename = this.forename;
-            surname = this.surname;
-            email = this.email;
+            var forename = this.forename;
+            var surname = this.surname;
+            var email = this.email;
             this.forename = "";
             this.surname = "";
             this.email = "";
@@ -239,6 +260,8 @@
         };
 
         $scope.closeSigning = function () {
+            this.user = "";
+            this.password = "";
             $('#modalSignin').modal('hide');
         };
 
@@ -252,6 +275,13 @@
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 
+        $scope.closeChangePassword = function () {
+            this.password = "";
+            this.password1 = "";
+            this.password2 = "";
+            $('#modalSignin').modal('hide');
+        };
+
         $scope.invite = function () {
             $('#modalInvite').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
@@ -261,14 +291,23 @@
             informationFactory.adminUsers().success(adminUsersSuccessCallback).error(errorCallback);
         };
 
-        $scope.deleteUser = function(email) {
-            bootbox.confirm("Are you sure you want to delete the user with email " + email + "?",
-                informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback)
-            );
-        }
+
+        $scope.deleteUser = function (email) {
+            if (confirm("Are you sure you want to delete the user with email " + email + "?")) {
+                informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback);
+            }
+            /*bootbox.confirm("Are you sure you want to delete the user with email " + email + "?",
+                function (result) {
+                    if (result) {
+                        informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback);
+                    }
+
+                }
+            );*/
+        };
 
         $scope.changeUserAdmin = function (email) {
-            admin = -1;
+            var admin = -1;
             if (this.admin == true) {
                 admin = 1;
             } else {
@@ -300,7 +339,7 @@
             $scope.oldHeadline = $scope.headline;
             $scope.headline = $scope.configure;
             $scope.configMenu = true;
-            $scope.oldAllowedEdit = $scope.allowedEdit
+            $scope.oldAllowedEdit = $scope.allowedEdit;
             $scope.allowedEdit = false;
             $scope.information = ""
         };
@@ -312,11 +351,7 @@
         };
 
         $scope.editPage = function () {
-            if ($scope.allowedEdit) {
-                $scope.edit = true;
-            } else {
-                $scope.edit = false;
-            }
+            $scope.edit = $scope.allowedEdit;
 
         };
 
