@@ -62,6 +62,8 @@ class SpHandler(object):
         """
         if path == "metadata":
             return True
+        if re.search(self.sp_conf.DISCOENDPOINT, path):
+            return True
         if re.search(self.sp_conf.SPVERIFYBASE, path):
             return True
         for regex in self.sp_conf.ASCVERIFYPOSTLIST:
@@ -111,7 +113,8 @@ class SpHandler(object):
 
         if self.SPHANDLERSSOCACHE not in session or session[self.SPHANDLERSSOCACHE] is None:
             session[self.SPHANDLERSSOCACHE] = Cache()
-        if re.search(self.sp_conf.SPVERIFYBASE, path) or re.search(self.sp_conf.SPVERIFYBASEIDP, path):
+        if re.search(self.sp_conf.SPVERIFYBASE, path) or re.search(self.sp_conf.SPVERIFYBASEIDP, path) \
+            or re.search(self.sp_conf.DISCOENDPOINT, path):
             _sso = SSO(self.sp, environ, start_response, self.logger, session[self.SPHANDLERSSOCACHE], **self.args)
             return _sso.do()
         for regex in self.sp_conf.ASCVERIFYPOSTLIST:
