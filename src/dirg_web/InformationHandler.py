@@ -407,7 +407,10 @@ class Information(object):
                                                None, self.parameters["password"])
                 if not success:
                     db = self.dirg_web_db()
-                    valid = db.validate_password(self.parameters["user"], self.parameters["password"])
+                    try:
+                        valid = db.validate_password(self.parameters["user"], self.parameters["password"])
+                    except DirgWebDbValidationException as ex:
+                        return self.service_error("You are not authorized!")
                     if valid:
                         user = db.user(self.parameters["user"])
                         success = self.session.sign_in(self.parameters["user"], SecureSession.DBPASSWORD,

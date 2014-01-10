@@ -5,7 +5,7 @@ from saml2.metadata import create_metadata_string
 from dirg_web.InformationHandler import Information
 
 from dirg_util.log import create_logger
-from dirg_util.http_util import HttpHandler
+from dirg_util.http_util import HttpHandler, Response
 
 
 #External imports
@@ -58,10 +58,11 @@ def application(environ, start_response):
 
     http_helper.log_request()
 
-    #if path=="refresh":
-        #username_password = open("auth/user_pass.json").read()
-        #username_password = json.loads(username_password)
-        #return Response()(environ, start_response)
+    if path=="refresh":
+        global username_password
+        username_password = open("auth/user_pass.json").read()
+        username_password = json.loads(username_password)
+        return Response("You have performed a refresh.")(environ, start_response)
 
     if http_helper.verify_static(path):
         return http_helper.handle_static(path)

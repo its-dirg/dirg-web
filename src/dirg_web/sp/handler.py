@@ -60,6 +60,8 @@ class SpHandler(object):
         :param path: The requested path.
         :return: True if this class should handle this request, otherwise false.
         """
+        if path == "metadata":
+            return True
         if re.search(self.sp_conf.SPVERIFYBASE, path):
             return True
         for regex in self.sp_conf.ASCVERIFYPOSTLIST:
@@ -95,6 +97,9 @@ class SpHandler(object):
                  URL to the authorization endpoint.
                  400 bad request.
         """
+        if path == "metadata":
+            start_response('200 OK', [('Content-Type', "text/xml")])
+            return self.metadata
         if "verify" in parameters and parameters["verify"] == "true":
             if "tag" in parameters:
                 if "email" in parameters:
