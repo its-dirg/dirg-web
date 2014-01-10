@@ -78,7 +78,6 @@ CONFIG = {
     },
     "key_file": "sp_cert/sp.key",
     "cert_file": "sp_cert/sp.crt",
-    #"attribute_map_dir": "attributemaps/",
     "xmlsec_binary": xmlsec_path,
     "metadata": {"local": ["/Users/haho0032/Develop/githubFork/pysaml2/example/idp2/idp.xml"]},
     "name_form": NAME_FORMAT_URI,
