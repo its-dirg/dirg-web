@@ -41,7 +41,7 @@ def application(environ, start_response):
     :param start_response: WSGI start response.
     :return: Depends on the request. Always a WSGI response where start_response first have to be initialized.
     """
-
+    global username_password
     verification = False
     response = None
 
@@ -59,7 +59,6 @@ def application(environ, start_response):
     http_helper.log_request()
 
     if path=="refresh":
-        global username_password
         username_password = open("auth/user_pass.json").read()
         username_password = json.loads(username_password)
         return Response("You have performed a refresh.")(environ, start_response)
