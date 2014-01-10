@@ -2,6 +2,7 @@
 __author__ = 'haho0032'
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_HTTP_POST
+from saml2.extension.idpdisc import BINDING_DISCO
 from saml2.saml import NAME_FORMAT_URI
 from saml2.entity_category.edugain import COC
 from saml2.entity_category.swamid import RESEARCH_AND_EDUCATION
@@ -54,6 +55,8 @@ ASCREDIRECT = 'acsredirect'
 #For the cookies to work do not use subfolders.
 ASCPOST = 'acspost'
 
+DISCOENDPOINT = "disco"
+
 #Regual expression to match a post from Idp to SP.
 ASCVERIFYPOSTLIST = [ASCPOST + "/(.*)$", ASCPOST + "$"]
 #Regual expression to match a redirect from Idp to SP.
@@ -71,6 +74,9 @@ CONFIG = {
                 "assertion_consumer_service": [
                     (BASE + "/" + ASCREDIRECT, BINDING_HTTP_REDIRECT),
                     (BASE + "/" + ASCPOST, BINDING_HTTP_POST)
+                ],
+                "discovery_response": [
+                    (BASE + "/" + DISCOENDPOINT, BINDING_DISCO)
                 ],
                 "required_attributes": ["uid"],
             }
