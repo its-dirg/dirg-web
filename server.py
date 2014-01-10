@@ -113,15 +113,15 @@ if __name__ == '__main__':
     global sphandler
     sphandler = SpHandler(logger, metadata, os.path.dirname(os.path.abspath( __file__ )), args.sp_conf+".py", sp_config)
 
-    global SRV
-    SRV = wsgiserver.CherryPyWSGIServer(('0.0.0.0', config.PORT), SessionMiddleware(application, config.SESSION_OPTS))
-    SRV.stats['Enabled'] = True
+    global srv
+    srv = wsgiserver.CherryPyWSGIServer(('0.0.0.0', config.PORT), SessionMiddleware(application, config.SESSION_OPTS))
+    srv.stats['Enabled'] = True
     #SRV = wsgiserver.CherryPyWSGIServer(('0.0.0.0', config.PORT), application)
     if config.HTTPS:
-        SRV.ssl_adapter = ssl_pyopenssl.pyOpenSSLAdapter(config.SERVER_CERT, config.SERVER_KEY, config.CERT_CHAIN)
+        srv.ssl_adapter = ssl_pyopenssl.pyOpenSSLAdapter(config.SERVER_CERT, config.SERVER_KEY, config.CERT_CHAIN)
     logger.info("Server starting")
     print "Server is listening on port: %s" % config.PORT
     try:
-        SRV.start()
+        srv.start()
     except KeyboardInterrupt:
-        SRV.stop()
+        srv.stop()

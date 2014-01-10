@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
 from dirg_web.util import SecureSession
+
 __author__ = 'haho0032'
 #Port for the webserver.
-PORT=4646
+PORT = 4646
 #True if HTTPS should be used instead of HTTP.
-HTTPS=True
+HTTPS = True
 
 #URL to de server
-BASEURL="localhost"
+BASEURL = "localhost"
 if HTTPS:
     BASEURL = "https://%s" % BASEURL
 else:
@@ -17,7 +18,7 @@ else:
 #Full URL to the OP server
 ISSUER = "%s:%s" % (BASEURL, PORT)
 
-LOG_FILE="server.log"
+LOG_FILE = "server.log"
 
 #Beaker session configuration.
 SESSION_OPTS = {
@@ -35,25 +36,25 @@ SERVER_KEY = "httpsCert/server.key"
 #CERT_CHAIN="certs/chain.pem"
 CERT_CHAIN = None
 
-CONFIGFILES="configFiles"
+CONFIGFILES = "configFiles"
 
 IDPTESTENVIROMENT = [
     {
         "Name": "target2",
-        "Description" : "Local IdP"
+        "Description": "Local IdP"
     },
     {
         "Name": "target",
-        "Description" : "The new Local IdP"
+        "Description": "The new Local IdP"
     }
 ]
 
 AUTHENTICATION_LIST = [
-                        {"type": SecureSession.USERPASSWORD, "name": "Authenticate with username/password"},
-                        {"type": SecureSession.SP, "name": "Authenticate with SAML"},
-                      ]
+    {"type": SecureSession.USERPASSWORD, "name": "Authenticate with username/password"},
+    {"type": SecureSession.SP, "name": "Authenticate with SAML"},
+]
 
-SQLITE_DB = os.path.dirname(os.path.abspath( __file__ )) + "/sqlite.db"
+SQLITE_DB = os.path.dirname(os.path.abspath(__file__)) + "/sqlite.db"
 
 EMAIL_CONFIG = {
     "base_url": ISSUER,
