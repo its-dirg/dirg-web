@@ -5,6 +5,7 @@ from dirg_web.util import SecureSession
 __author__ = 'haho0032'
 #Port for the webserver.
 PORT = 4646
+HTTP_PORT = 8046
 #True if HTTPS should be used instead of HTTP.
 HTTPS = True
 
