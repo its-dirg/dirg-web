@@ -65,11 +65,11 @@ ASCVERIFYREDIRECTLIST = [ASCREDIRECT + "/(.*)$", ASCREDIRECT + "$"]
 #Traditional pysaml2 configuration for a SP. View more documentation for pysaml2.
 CONFIG = {
     "entityid": "%s/%ssp.xml" % (BASE, ""),
-    "description": "Verify Entity Categories SP",
+    "description": "Dirg web SP.",
     "entity_category": [COC, RESEARCH_AND_EDUCATION, HEI, SFS_1993_1153, NREN, EU],
     "service": {
         "sp": {
-            "name": "Rolands SP",
+            "name": "Dirgweb",
             "endpoints": {
                 "assertion_consumer_service": [
                     (BASE + "/" + ASCREDIRECT, BINDING_HTTP_REDIRECT),
@@ -85,6 +85,6 @@ CONFIG = {
     "key_file": "sp_cert/sp.key",
     "cert_file": "sp_cert/sp.crt",
     "xmlsec_binary": xmlsec_path,
-    "metadata": {"local": ["/Users/haho0032/Develop/githubFork/pysaml2/example/idp2/idp.xml"]},
+    "metadata": {"local": ["../idp.xml"]},
     "name_form": NAME_FORMAT_URI,
 }
