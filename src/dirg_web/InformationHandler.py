@@ -42,6 +42,7 @@ class Information(object):
         self.information_path = "information/"
         self.file_ending = ".html"
         self.menu_file = "menu/menu.json"
+        self.custom_css_file = "static/custom.css"
         self.banned_users = "banned_users"
         self.urls = [
             "",
@@ -58,7 +59,9 @@ class Information(object):
             "changeUserAdmin",
             "changeUserValid",
             "deleteuser",
-            "changepasswd"
+            "changepasswd",
+            "file",
+            "savefile"
         ]
 
         if self.banned_users not in self.cache:
@@ -76,6 +79,10 @@ class Information(object):
             if "page" in self.parameters:
                 return self.handle_information(self.parameters["page"])
             return self.service_error("Page not found!")
+        if path == "file":
+            return self.handle_file()
+        if path == "savefile":
+            return self.handle_savefile()
         if path == "menu":
             return self.handle_menu(self.menu_file)
         if path == "save":
@@ -512,23 +519,111 @@ class Information(object):
             fp.close()
             return self.return_json(" ")
 
+    def handle_file(self):
+        try:
+            if not self.session.is_allowed_to_change_file(self.cache[self.banned_users]):
+                return self.service_error("You are not authorized!")
+            try:
+                if "name" in self.parameters:
+                    name = self.parameters["name"]
+                    if name == "css":
+                        file_ = self.custom_css_file
+                    elif name == "menu":
+                        file_ = self.menu_file
+                    else:
+                        return self.service_error("File not found!", None, False, False)
+                    fp = open(file_, 'r')
+                    text = fp.read()
+                    if text == "":
+                        text = " "
+                    fp.close()
+                    return self.return_text(text)
+            except IOError as ex:
+                return self.service_error("Invalid request!", ex, True, False)
+        except Exception as ex:
+            return self.service_error("Invalid request!", ex, True, False)
+
+    def handle_savefile(self):
+        try:
+            if not self.session.is_allowed_to_change_file(self.cache[self.banned_users]):
+                return self.html_error("You are not authorized!")
+            try:
+                if "name" in self.parameters and "filetext" in self.parameters:
+                    name = self.parameters["name"][0]
+                    filetext = self.parameters["filetext"][0]
+                    if name == "css":
+                        file_ = self.custom_css_file
+                    elif name == "menu":
+                        file_ = self.menu_file
+                    else:
+                        return self.html_error("Invalid request!")
+
+                    fp = open(file_, 'r')
+                    text = fp.read()
+                    if text == "":
+                        text = " "
+                    fp.close()
+
+                    if len((text.strip())) > 0:
+                        ts = time.time()
+                        timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                        backup_file = self.backup_path + name + "_" + timestamp
+                        fp = open(backup_file, 'w')
+                        fp.write(text)
+                        fp.close()
+
+                    fp = open(file_, 'w')
+                    fp.write(filetext)
+                    fp.close()
+                    resp = Redirect("/")
+                    return resp(self.environ, self.start_response)
+            except IOError as ex:
+                return self.html_error("Invalid request!", ex, True)
+        except Exception as ex:
+            return self.html_error("Invalid request!", ex, True)
+
+    def return_text(self, text):
+        resp = Response(text, headers=[('Content-Type', "text/plain")])
+        return resp(self.environ, self.start_response)
+
     def return_json(self, text):
         resp = Response(text, headers=[('Content-Type', "application/json")])
         return resp(self.environ, self.start_response)
 
-    def service_error(self, message, exception=None, error=False):
+    def service_error(self, message, exception=None, error=False, json_message=True):
         exception_message = ""
         if exception is not None and exception.message is not None:
             exception_message = " \nException message: " + exception.message
         error_message = "Service error message: " + message + exception_message
-        message = {"ExceptionMessage": message}
+        if json_message:
+            message = {"ExceptionMessage": message}
 
         if error:
             self.logger.error(error_message)
         else:
             self.logger.warning(error_message)
-        resp = ServiceError(json.dumps(message))
+        if json_message:
+            resp = ServiceError(json.dumps(message), headers=[('Content-Type', "application/json")])
+        else:
+            resp = ServiceError(message, headers=[('Content-Type', "text/plain")])
         return resp(self.environ, self.start_response)
+
+    def html_error(self, message, exception=None, error=False):
+        exception_message = ""
+        if exception is not None and exception.message is not None:
+            exception_message = " \nException message: " + exception.message
+        error_message = "Service error message: " + message + exception_message
+        if error:
+            self.logger.error(error_message)
+        else:
+            self.logger.warning(error_message)
+        resp = Response(mako_template="html_error.mako",
+                        template_lookup=self.lookup,
+                        headers=[])
+        argv = {
+            "errormessage": message
+        }
+        return resp(self.environ, self.start_response, **argv)
 
     def change_user_valid(self):
         try:

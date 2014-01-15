@@ -9,6 +9,10 @@
             getInformation: function (page) {
                 return $http.get("/information", {params: { "page": page}});
             },
+            getFile: function (name, callback, toaster, scope) {
+                url = "/file?name=" + name
+                return $.get(url, callback).fail(function() {toaster.pop('error', "Notification", "Invalid request!"); scope.$apply();});
+            },
             saveInformation: function (page, html) {
                 return $http.post("/save", { "page": page, "html": html});
             },
@@ -62,8 +66,6 @@
         $scope.allowSignout = true;
         //Allows the user to edit pages.
         $scope.allowedEdit = false;
-        //Allows the user to edit users.
-        $scope.allowUserChange = false;
         //The headline for the page.
         $scope.headline = "";
         //True if the user is authenticated, otherwise false.
@@ -78,8 +80,14 @@
         $scope.authMethod = "";
         //Set to true if you want to allow menu configuration.
         $scope.allowConfig = false;
+
         //Set to true if you want to allow user to invite other users.
         $scope.allowInvite = false;
+        //Allows the user to edit users.
+        $scope.allowUserChange = false;
+        //Allows the user to view the admin menu.
+        $scope.allowAdmin = false;
+
         //True if the user is changing the menu configurations.
         //This functionality is not fully implemented and do not work!
         $scope.configMenu = false;
@@ -115,7 +123,6 @@
 
         var fetchMenuSuccessCallback = function (data, status, headers, config) {
             try {
-                $scope.configure = data.configure;
                 $scope.getInformationFromServer(data.left[0].submit, data.left[0].name);
             } catch(e) {
                 try {
@@ -228,6 +235,8 @@
             $scope.authenticated = authResponse.authenticated == "true";
             $scope.allowUserChange = authResponse.allowUserChange == "true";
             $scope.allowChangePassword = authResponse.allowChangePassword == "true";
+
+            $scope.allowAdmin = $scope.allowInvite || $scope.allowConfig;
         };
 
         $scope.submitSignIn = function () {
@@ -293,17 +302,18 @@
 
 
         $scope.deleteUser = function (email) {
-            if (confirm("Are you sure you want to delete the user with email " + email + "?")) {
+            /*if (confirm("Are you sure you want to delete the user with email " + email + "?")) {
                 informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback);
-            }
-            /*bootbox.confirm("Are you sure you want to delete the user with email " + email + "?",
+            }*/
+            bootbox.confirm("Are you sure you want to delete the user with email " + email + "?",
                 function (result) {
                     if (result) {
                         informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback);
+                        $scope.$apply();
                     }
 
                 }
-            );*/
+            );
         };
 
         $scope.changeUserAdmin = function (email) {
@@ -335,19 +345,39 @@
             informationFactory.signout().success(signoutSuccessCallback).error(errorCallback);
         };
 
+        var getMenuFileSuccessCallback = function (data, status) {
+            $scope.editFile($scope.menu.editmenu, "menu", "You can edit the menu on this page.", data);
+            $scope.$apply();
+        };
+
+        var getCSSFileSuccessCallback = function (data, status) {
+            $scope.editFile($scope.menu.css, "css", "Here you can edit your custom css.", data);
+            $scope.$apply();
+        };
+
+        $scope.editCSS = function () {
+            informationFactory.getFile("css", getCSSFileSuccessCallback, toaster, $scope);
+        };
+
         $scope.editMenu = function () {
+            informationFactory.getFile("menu", getMenuFileSuccessCallback, toaster, $scope);
+        };
+
+        $scope.editFile = function (header, name, text, filetext) {
             $scope.oldHeadline = $scope.headline;
-            $scope.headline = $scope.configure;
+            $scope.headline = header;
             $scope.configMenu = true;
             $scope.oldAllowedEdit = $scope.allowedEdit;
             $scope.allowedEdit = false;
-            $scope.information = ""
-        };
-
-        $scope.saveMenu = function () {
-            $scope.configMenu = false;
-            $scope.allowedEdit = $scope.oldAllowedEdit;
-            $scope.getInformationFromServer($scope.page, $scope.oldHeadline);
+            $scope.information = text +
+                '<form action="savefile" class="form" role="form" method="post">' +
+                    '<input type="hidden" id="name" name="name" ng-model="name" value="' + name + '" >' +
+                    '<button type="submit" class="btn btn-primary">Save</button>' +
+                    '<div class="form-group">' +
+                        '<textarea id="filetext" name="filetext" rows="10" cols="100" >' + filetext + '</textarea>' +
+                    '</div>' +
+                    '<button type="submit" class="btn btn-primary">Save</button>' +
+                '</form>'
         };
 
         $scope.editPage = function () {

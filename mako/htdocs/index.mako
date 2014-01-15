@@ -29,6 +29,7 @@ Please view static/test.js for more example of angular and toaster.
 <%block name="css">
     <!-- Add more css imports here! -->
     <link rel="stylesheet" type="text/css" href="/static/dirg.css">
+        <link rel="stylesheet" type="text/css" href="/static/custom.css">
     ${parent.script()}
 </%block>
 

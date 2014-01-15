@@ -101,6 +101,13 @@ class SecureSession(Session):
             return True
         return False
 
+    def is_allowed_to_change_file(self, banned_users):
+        if self.email() in banned_users:
+            return False
+        if self.is_authenticated() and self.is_administrator():
+            return True
+        return False
+
     def is_allowed_to_edit_page(self, banned_users):
         if self.email() in banned_users:
             return False

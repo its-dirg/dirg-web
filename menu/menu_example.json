@@ -1,6 +1,8 @@
 {
     "icon" : "/static/icon.png",
     "invite": "Invite",
+    "css": "Edit css",
+    "editmenu": "Edit menu",
     "changepassword": "Change password",
     "signin": "Sign in",
     "signout": "Sign out",
