@@ -599,7 +599,7 @@ class Information(object):
 
     def service_error(self, message, exception=None, error=False, json_message=True):
         if exception is not None:
-            self.logger.exception(exception)
+            self.logger.error("Exception: ", exception)
         error_message = "Service error message: " + message
         if json_message:
             message = {"ExceptionMessage": message}
@@ -616,7 +616,7 @@ class Information(object):
 
     def html_error(self, message, exception=None, error=False):
         if exception is not None:
-            self.logger.exception(exception)
+            self.logger.error("Exception: ", exception)
         error_message = "Service error message: " + message
         if error:
             self.logger.error(error_message)
