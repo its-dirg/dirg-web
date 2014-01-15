@@ -532,11 +532,15 @@ class Information(object):
                         file_ = self.menu_file
                     else:
                         return self.service_error("File not found!", None, False, False)
-                    fp = open(file_, 'r')
-                    text = fp.read()
-                    if text == "":
-                        text = " "
-                    fp.close()
+                    text = " "
+                    try:
+                        fp = open(file_, 'r')
+                        text = fp.read()
+                        if text == "":
+                            text = " "
+                        fp.close()
+                    except IOError:
+                        pass
                     return self.return_text(text)
             except IOError as ex:
                 return self.service_error("Invalid request!", ex, True, False)
@@ -558,11 +562,15 @@ class Information(object):
                     else:
                         return self.html_error("Invalid request!")
 
-                    fp = open(file_, 'r')
-                    text = fp.read()
-                    if text == "":
-                        text = " "
-                    fp.close()
+                    text = ""
+                    try:
+                        fp = open(file_, 'r')
+                        text = fp.read()
+                        if text == "":
+                            text = " "
+                        fp.close()
+                    except IOError:
+                            pass
 
                     if len((text.strip())) > 0:
                         ts = time.time()
@@ -571,7 +579,6 @@ class Information(object):
                         fp = open(backup_file, 'w')
                         fp.write(text)
                         fp.close()
-
                     fp = open(file_, 'w')
                     fp.write(filetext)
                     fp.close()
