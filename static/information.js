@@ -192,6 +192,7 @@
 
         $scope.getInformationFromServer = function (page, name) {
             if (page != "") {
+                $scope.allowedEdit = $scope.oldAllowedEdit;
                 $scope.headline=name;
                 $scope.page = page;
                 informationFactory.getInformation(page).success(getInformationSuccessCallback).error(errorCallback);
@@ -237,6 +238,8 @@
             $scope.allowChangePassword = authResponse.allowChangePassword == "true";
 
             $scope.allowAdmin = $scope.allowInvite || $scope.allowConfig;
+
+            $scope.oldAllowedEdit = $scope.allowedEdit;
         };
 
         $scope.submitSignIn = function () {
@@ -364,6 +367,7 @@
         };
 
         $scope.editFile = function (header, name, text, filetext) {
+            $scope.edit = false;
             $scope.oldHeadline = $scope.headline;
             $scope.headline = header;
             $scope.configMenu = true;
