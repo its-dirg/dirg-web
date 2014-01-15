@@ -73,7 +73,7 @@ Please view static/test.js for more example of angular and toaster.
                 <h4 class="modal-title" id="myModalLabel">Sign in</h4>
             </div>
           <div class="modal-body">
-            <select ng-model="prop.value" ng-click="setAuthMethod();" ng-options="v.type as v.name for v in prop.values"></select>
+            <select ng-model="prop.value" ng-change="setAuthMethod();" ng-options="v.type as v.name for v in prop.values"></select>
             <form ng-submit="submitSignIn()" class="form" role="form" ng-show="authMethod == 'userpassword'">
               <div class="form-group">
                 <label class="sr-only" for="user">User</label>
