@@ -591,10 +591,9 @@ class Information(object):
         return resp(self.environ, self.start_response)
 
     def service_error(self, message, exception=None, error=False, json_message=True):
-        exception_message = ""
-        if exception is not None and exception.message is not None:
-            exception_message = " \nException message: " + exception.message
-        error_message = "Service error message: " + message + exception_message
+        if exception is not None:
+            self.logger.exception(exception)
+        error_message = "Service error message: " + message
         if json_message:
             message = {"ExceptionMessage": message}
 
@@ -609,10 +608,9 @@ class Information(object):
         return resp(self.environ, self.start_response)
 
     def html_error(self, message, exception=None, error=False):
-        exception_message = ""
-        if exception is not None and exception.message is not None:
-            exception_message = " \nException message: " + exception.message
-        error_message = "Service error message: " + message + exception_message
+        if exception is not None:
+            self.logger.exception(exception)
+        error_message = "Service error message: " + message
         if error:
             self.logger.error(error_message)
         else:
