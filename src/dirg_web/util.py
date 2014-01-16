@@ -34,6 +34,10 @@ class SecureSession(Session):
     MENU_PUBLIC = "public"
     MENU_PRIVATE = "private"
     MENU_CONSTRUCT = "construct"
+    DATA_PAGE = "data_page"
+    DATA_SUBMENU_HEADER = "data_submenu_heder"
+    DATA_SUBMENU_PAGE = "data_submenu_page"
+    DATA_IS_SET = "data_is_set"
 
     ALLOW_CHANGEPASSWORD = "allowChangePassword"
     ALLOW_INVITE = "allowInvite"
@@ -180,6 +184,25 @@ class SecureSession(Session):
         #if self[self.AUTHENTICATION_TYPE] == self.SP:
         #    auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
         return auth_object
+
+    def setup_page(self, page, submenu_header, submeny_page):
+        self[self.DATA_IS_SET] = True
+        self[self.DATA_PAGE] = page
+        self[self.DATA_SUBMENU_HEADER] = submenu_header
+        self[self.DATA_SUBMENU_PAGE] = submeny_page
+
+    def is_page_set(self):
+        return self[self.DATA_IS_SET]
+
+    def clear_page(self):
+        self[self.DATA_IS_SET] = False
+        self[self.DATA_PAGE] = ""
+        self[self.DATA_SUBMENU_HEADER] = ""
+        self[self.DATA_SUBMENU_PAGE] = ""
+
+    def get_page(self):
+        return self[self.DATA_PAGE], self[self.DATA_SUBMENU_HEADER], self[self.DATA_SUBMENU_PAGE]
+
 
 
 class DirgWebDbValidationException(Exception):

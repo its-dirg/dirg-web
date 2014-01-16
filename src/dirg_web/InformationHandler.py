@@ -71,6 +71,9 @@ class Information(object):
         for url in self.urls:
             if path == url:
                 return True
+        if path[:4] == "page":
+            return True
+        return False
 
     def handle(self, path):
         if self.session.email() is not None and self.session.email() in self.cache[self.banned_users]:
@@ -109,7 +112,8 @@ class Information(object):
             return self.delete_user()
         if path == "changepasswd":
             return self.change_passwd()
-
+        if path[:4] == "page":
+            return self.handle_viewpage(path)
         else:
             return self.handle_index()
 
@@ -556,39 +560,79 @@ class Information(object):
                         return True
         return False
 
-    def handle_information(self, page):
-        page_ok = self.validate_page(page)
-
+    def get_information(self, page):
         submeny_header = ""
         submeny_page = ""
+        submeny_header_file = ""
+        submeny_page_file = ""
+        if self.session.is_page_set():
+            page, submeny_header, submeny_page = self.session.get_page()
+            self.parameters["submeny_header"] = submeny_header
+            self.parameters["submeny_page"] = submeny_page
+            self.session.clear_page()
+
+        text = " "
+        page_ok = self.validate_page(page)
 
         submenu = self.get_submenu(page)
         if "submeny_header" in self.parameters and "submeny_page" in self.parameters:
             if len(self.parameters["submeny_header"]) > 0 and len(self.parameters["submeny_page"]) > 0:
-                submeny_header = "." + self.parameters["submeny_header"]
-                submeny_page = "." + self.parameters["submeny_page"]
+                submeny_header = self.parameters["submeny_header"]
+                submeny_page = self.parameters["submeny_page"]
+                submeny_header_file = "." + submeny_header
+                submeny_page_file = "." + submeny_page
                 page_ok = self.validate_submenu(submenu, self.parameters["submeny_header"],
                                                 self.parameters["submeny_page"])
         else:
-            if len(submenu) > 0 and len(submenu[0]["list"]) > 0:
-                submeny_header = "." + submenu[0]["submit"]
-                submeny_page = "." + submenu[0]["list"][0]["submit"]
-
+            if submenu is not None and len(submenu) > 0 and len(submenu[0]["list"]) > 0:
+                submeny_header = submenu[0]["submit"]
+                submeny_page = submenu[0]["list"][0]["submit"]
+                submeny_header_file = "." + submeny_header
+                submeny_page_file = "." + submeny_page
 
         if not page_ok:
-            return self.service_error("Invalid request!")
-        file_ = self.information_path + page + submeny_header + submeny_page + self.file_ending
+            return False, text, "", "", ""
+
+        file_ = self.information_path + page + submeny_header_file + submeny_page_file + self.file_ending
         try:
             fp = open(file_, 'r')
             text = fp.read()
             if text == "":
                 text = " "
             fp.close()
-            return self.return_json(text)
         except IOError:
             fp = open(file_, 'w')
             fp.close()
-            return self.return_json(" ")
+
+        return True, text, page, submeny_header, submeny_page
+
+    def handle_viewpage(self, path):
+        parameters = path.split("/")
+        if len(parameters) == 2:
+            page = parameters[1]
+        elif len(parameters) == 4:
+            page = parameters[1]
+            self.parameters["submeny_header"] = parameters[2]
+            self.parameters["submeny_page"] = parameters[3]
+        else:
+            return self.html_error("No such page can be found for you!")
+
+        page_ok, text, page, submenu_header, submeny_page = self.get_information(page)
+        if not page_ok:
+            return self.html_error("No such page can be found for you!")
+
+        self.session.setup_page(page, submenu_header, submeny_page)
+
+        return self.handle_index()
+
+    def handle_information(self, page):
+        page_ok, text, page, submenu_header, submeny_page = self.get_information(page)
+        if not page_ok:
+            return self.service_error("Invalid request!")
+
+        data = {"html": text, "page": page, "submenu_header": submenu_header, "submenu_page": submeny_page}
+
+        return self.return_json(json.dumps(data))
 
     def handle_file(self):
         try:

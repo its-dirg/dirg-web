@@ -113,10 +113,24 @@
 
 
         var getInformationSuccessCallback = function (data, status, headers, config) {
-            $scope.information = data;
-            setupSubmenu($scope.menu.right);
-            setupSubmenu($scope.menu.left);
+            $scope.information = data.html;
+            $scope.submenu_header = data.submenu_header;
+            $scope.submenu_page = data.submenu_page;
+            $scope.page = data.page;
+            breadcrum = "";
+            breadcrum = setupSubmenu($scope.menu.right, breadcrum);
+            breadcrum = setupSubmenu($scope.menu.left, breadcrum);
+            $scope.headline = breadcrum;
+            pageurl = "/page/"+$scope.page;
+            if ($scope.submenu_header != "") {
+                pageurl =pageurl + "/" + $scope.submenu_header
+                if ($scope.submenu_page != "") {
+                    pageurl = pageurl + "/" + $scope.submenu_page
+                }
+            }
+            window.history.pushState({path:pageurl},'',pageurl);
             $scope.edit = false;
+            $scope.$apply();
         };
 
         var saveInformationSuccessCallback = function (data, status, headers, config) {
@@ -127,33 +141,32 @@
             toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
-        var setupSubmenu = function(menu) {
-            breadcrum = "";
+        var setupSubmenu = function(menu, breadcrum) {
             $scope.submenu = [];
             for (var i=0;i<menu.length;i++) {
                 if (menu[i].submit == $scope.page) {
                     breadcrum = menu[i].name;
-                    handleSubmenu(menu[i].submenu, breadcrum);
+                    if (menu[i].submenu.length > 0) {
+                        breadcrum = handleSubmenu(menu[i].submenu, breadcrum);
+                    }
                     break;
                 }
                 if (menu[i].children.length > 0) {
                     for (var j=0;j<menu[i].children.length;j++) {
                         if (menu[i].children[j].submit == $scope.page) {
                             breadcrum = menu[i].name + " -> " + menu[i].children[j].name;
-                            handleSubmenu(menu[i].children[j].submenu, breadcrum);
+                            if (menu[i].children[j].submenu.length > 0){
+                                breadcrum = handleSubmenu(menu[i].children[j].submenu, breadcrum);
+                            }
                             break;
                         }
                     }
                 }
             }
-
+            return breadcrum
         }
 
         var handleSubmenu = function(submenu, breadcrum) {
-            if ($scope.submeny_header == "" || $scope.submeny_page == "" || typeof $scope.submeny_header === "undefined" || typeof $scope.submeny_page === "undefined") {
-                $scope.submeny_header = submenu[0].submit;
-                $scope.submeny_page = submenu[0].list[0].submit;
-            }
             if (submenu.length > 0) {
                 for (var i=0;i<submenu.length;i++){
                     if (submenu[i].type == "collapse_open") {
@@ -179,7 +192,7 @@
                 }
             }
             $scope.submenu = submenu;
-            $scope.headline = breadcrum;
+            return breadcrum
         }
 
 
@@ -255,16 +268,16 @@
         $scope.getInformationFromServer = function (page, submeny_header, submeny_page) {
             if (page != "") {
                 if (typeof submeny_header !== 'undefined') {
-                    $scope.submeny_header = submeny_header;
+                    //$scope.submeny_header = submeny_header;
                     if (typeof submeny_page !== 'undefined') {
-                        $scope.submeny_page = submeny_page;
+                        //$scope.submeny_page = submeny_page;
                     }
                 } else {
-                    $scope.submeny_header = "";
-                    $scope.submeny_page = "";
+                    //$scope.submeny_header = "";
+                    //$scope.submeny_page = "";
                 }
                 $scope.allowedEdit = $scope.oldAllowedEdit;
-                $scope.page = page;
+                //$scope.page = page;
                 informationFactory.getInformation(page,submeny_header, submeny_page).success(getInformationSuccessCallback).error(errorCallback);
             }
         };
