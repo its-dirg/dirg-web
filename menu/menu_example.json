@@ -14,14 +14,16 @@
             "submit": "team",
             "type": "private",
             "class": "",
-            "children": []
+            "children": [],
+            "submenu": []
         },
         {
             "name": "Contacts",
             "submit": "contacts",
             "type": "public",
             "class": "",
-            "children": []
+            "children": [],
+            "submenu": []
         }
     ],
     "left" : [
@@ -30,7 +32,8 @@
             "submit": "home",
             "type": "public",
             "class": "",
-            "children": []
+            "children": [],
+            "submenu": []
         },
         {
             "name": "Projects",
@@ -41,12 +44,84 @@
                 {
                     "name": "Project 1",
                     "submit": "project1",
-                    "type": "public"
+                    "type": "public",
+                    "submenu": [
+                                {
+                                    "name": "Header 1",
+                                    "submit": "header1",
+                                    "type": "static",
+                                    "list": [
+                                        {
+                                            "name": "Submenu 1",
+                                            "submit": "submenu1",
+                                            "type": "public"
+                                        },
+                                        {
+                                            "name": "Submenu 2",
+                                            "submit": "submenu2",
+                                            "type": "private"
+                                        },
+                                        {
+                                            "name": "Submenu 3",
+                                            "submit": "submenu3",
+                                            "type": "construct"
+                                        }
+
+                                    ]
+                                },
+                                {
+                                    "name": "Header 2",
+                                    "submit": "header2",
+                                    "type": "collapse_open",
+                                    "list": [
+                                        {
+                                            "name": "Submenu 1",
+                                            "submit": "submenu1",
+                                            "type": "public"
+                                        },
+                                        {
+                                            "name": "Submenu 2",
+                                            "submit": "submenu2",
+                                            "type": "private"
+                                        },
+                                        {
+                                            "name": "Submenu 3",
+                                            "submit": "submenu3",
+                                            "type": "construct"
+                                        }
+
+                                    ]
+                                },
+                                {
+                                    "name": "Header 3",
+                                    "submit": "header3",
+                                    "type": "collapse_close",
+                                    "list": [
+                                        {
+                                            "name": "Submenu 1",
+                                            "submit": "submenu1",
+                                            "type": "public"
+                                        },
+                                        {
+                                            "name": "Submenu 2",
+                                            "submit": "submenu2",
+                                            "type": "private"
+                                        },
+                                        {
+                                            "name": "Submenu 3",
+                                            "submit": "submenu3",
+                                            "type": "construct"
+                                        }
+
+                                    ]
+                                }
+                    ]
                 },
                 {
                     "name": "Project 2",
                     "submit": "project2",
-                    "type": "public"
+                    "type": "public",
+                    "submenu": []
                 }
             ]
         }

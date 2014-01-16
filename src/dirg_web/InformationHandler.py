@@ -381,9 +381,21 @@ class Information(object):
             if page is None or html is None:
                 return self.service_error("Invalid request!")
             page_ok = self.validate_page(page)
+
+            submeny_header = ""
+            submeny_page = ""
+
+            if "submeny_header" in self.parameters and "submeny_page" in self.parameters:
+                if len(self.parameters["submeny_header"]) > 0 and len(self.parameters["submeny_page"]) > 0:
+                    submeny_header = "." + self.parameters["submeny_header"]
+                    submeny_page = "." + self.parameters["submeny_page"]
+                    submenu = self.get_submenu(page)
+                    page_ok = self.validate_submenu(submenu, self.parameters["submeny_header"],
+                                                self.parameters["submeny_page"])
+
             if not page_ok:
                 return self.service_error("Invalid request!")
-            file_ = self.information_path + page + self.file_ending
+            file_ = self.information_path + page + submeny_header + submeny_page + self.file_ending
             try:
                 fp = open(file_, 'r')
                 text = fp.read()
@@ -391,7 +403,8 @@ class Information(object):
                 if len((text.strip())) > 0:
                     ts = time.time()
                     timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-                    backup_file = self.backup_path + page + "_" + timestamp + self.file_ending
+                    backup_file = self.backup_path + page + submeny_header + submeny_page + "_" + \
+                                  timestamp + self.file_ending
                     fp = open(backup_file, 'w')
                     fp.write(text)
                     fp.close()
@@ -478,21 +491,31 @@ class Information(object):
             for tmp_element in menu:
                 element = copy.deepcopy(tmp_element)
                 if self.session.menu_allowed(element, self.cache[self.banned_users]):
-                    tmp_menu.append(element)
+                    tmp_menu.append(self.filter_submenu_list(element))
                     if "children" in element:
                         children = []
                         for tmp_child in element["children"]:
                             child = copy.deepcopy(tmp_child)
                             if self.session.menu_allowed(child, self.cache[self.banned_users]):
-                                children.append(child)
+                                children.append(self.filter_submenu_list(child))
                         element["children"] = children
         return tmp_menu
 
+    def filter_submenu_list(self, element):
+        submenu_items = []
+        for tmp_submenu_item in element["submenu"]:
+            list_items = []
+            for tmp_list_item in tmp_submenu_item["list"]:
+                if self.session.menu_allowed(tmp_list_item, self.cache[self.banned_users]):
+                    list_items.append(tmp_list_item)
+            if len(list_items) > 0:
+                tmp_submenu_item["list"] = list_items
+                submenu_items.append(tmp_submenu_item)
+        element["submenu"] = submenu_items
+        return element
+
     def validate_page(self, page):
-        if "menu" not in self.cache or self.cache["menu"] is None:
-            self.handle_menu(self.menu_file)
-        menu = copy.deepcopy(self.cache["menu"])
-        menu = self.filter_menu(menu)
+        menu = self.get_menu()
         page_ok = False
         if "left" in menu:
             page_ok = self.find_page(page, menu["left"])
@@ -502,11 +525,59 @@ class Information(object):
             page_ok = False
         return page_ok
 
+    def get_menu(self):
+        if "menu" not in self.cache or self.cache["menu"] is None:
+            self.handle_menu(self.menu_file)
+        menu = copy.deepcopy(self.cache["menu"])
+        return self.filter_menu(menu)
+
+    def get_submenu(self, page):
+        menu = self.get_menu()
+        submenu = self.find_submenu(page, menu["right"])
+        if submenu is None:
+            submenu = self.find_submenu(page, menu["left"])
+        return submenu
+
+    def find_submenu(self, page, menu):
+        for element in menu:
+            if element["submit"] == page:
+                if len(element["submenu"]) > 0:
+                    return element["submenu"]
+            for child in element["children"]:
+                if child["submit"] == page:
+                    return child["submenu"]
+        return None
+
+    def validate_submenu(self, submenu, header, page):
+        for tmp_submenu_item in submenu:
+            if tmp_submenu_item["submit"] == header:
+                for tmp_list_item in tmp_submenu_item["list"]:
+                    if tmp_list_item["submit"] == page:
+                        return True
+        return False
+
     def handle_information(self, page):
         page_ok = self.validate_page(page)
+
+        submeny_header = ""
+        submeny_page = ""
+
+        submenu = self.get_submenu(page)
+        if "submeny_header" in self.parameters and "submeny_page" in self.parameters:
+            if len(self.parameters["submeny_header"]) > 0 and len(self.parameters["submeny_page"]) > 0:
+                submeny_header = "." + self.parameters["submeny_header"]
+                submeny_page = "." + self.parameters["submeny_page"]
+                page_ok = self.validate_submenu(submenu, self.parameters["submeny_header"],
+                                                self.parameters["submeny_page"])
+        else:
+            if len(submenu) > 0 and len(submenu[0]["list"]) > 0:
+                submeny_header = "." + submenu[0]["submit"]
+                submeny_page = "." + submenu[0]["list"][0]["submit"]
+
+
         if not page_ok:
             return self.service_error("Invalid request!")
-        file_ = self.information_path + page + self.file_ending
+        file_ = self.information_path + page + submeny_header + submeny_page + self.file_ending
         try:
             fp = open(file_, 'r')
             text = fp.read()

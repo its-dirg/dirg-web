@@ -6,27 +6,27 @@
     <div ng-repeat="element in list" ng-show="element.visible != false">{{element.id}}</div>
 <ul class="nav navbar-nav"  >
   <li ng-repeat="element in menu.left" class="{{element.class}}">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="getInformationFromServer(element.submit, element.name);">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="getInformationFromServer(element.submit);">
             {{element.name}}
             <b class="caret" ng-show="element.children"></b>
         </a>
         <ul class="dropdown-menu" ng-show="element.children">
           <li ng-repeat="child in element.children">
-              <a href="#" ng-click="getInformationFromServer(child.submit, element.name+' -> '+child.name);">{{child.name}}</a>
+              <a href="#" ng-click="getInformationFromServer(child.submit);">{{child.name}}</a>
           </li>
         </ul>
   </li>
 </ul>
 <ul class="nav navbar-nav navbar-right"  >
   <li ng-repeat="element in menu.right" class="{{element.class}}">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="getInformationFromServer(element.submit, element.name);">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" ng-click="getInformationFromServer(element.submit);">
             <b class="dropdown-toggle glyphicon glyphicon-pencil" ng-show="allowConfig == true && configMenu == true && authenticated == true"></b>
             {{element.name}}
             <b class="caret" ng-show="element.children"></b>
         </a>
         <ul class="dropdown-menu" ng-show="element.children">
           <li ng-repeat="child in element.children">
-              <a href="#" ng-click="getInformationFromServer(child.submit, element.name+' -> '+child.name);">{{child.name}}</a>
+              <a href="#" ng-click="getInformationFromServer(child.submit);">{{child.name}}</a>
           </li>
         </ul>
   </li>

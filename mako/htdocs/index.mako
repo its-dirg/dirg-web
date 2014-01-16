@@ -22,6 +22,7 @@ Please view static/test.js for more example of angular and toaster.
     ${parent.script()}
      <script type="text/javascript" src="/static/tinymce/tinymce.min.js"></script>
      <script type="text/javascript" src="/static/tinymce/jquery.tinymce.min.js"></script>
+    <script type="text/javascript" src="/static/tree.js"></script>
 
 </%block>
 
@@ -29,7 +30,8 @@ Please view static/test.js for more example of angular and toaster.
 <%block name="css">
     <!-- Add more css imports here! -->
     <link rel="stylesheet" type="text/css" href="/static/dirg.css">
-        <link rel="stylesheet" type="text/css" href="/static/custom.css">
+    <link rel="stylesheet" type="text/css" href="/static/custom.css">
+        <link rel="stylesheet" type="text/css" href="/static/tree.css">
     ${parent.script()}
 </%block>
 
@@ -59,8 +61,33 @@ Please view static/test.js for more example of angular and toaster.
     <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true" ng-click="editPage();"></div>
     <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true"  ng-click="savePage();"></div>
 
-    <div class="information" ng-show="edit == false" ng-bind-html-unsafe="information"></div>
 
+
+
+<table ng-show="edit == false">
+    <tr>
+    <td style="vertical-align: top;">
+        <div class="panel-group" id="accordion" style="padding-top: 15px;">
+            <div class="panel panel-default" ng-repeat="element in submenu">
+            <div class="panel-heading">
+              <h4 class="panel-title" ng-show="element.type == 'static'" >
+                <span>{{element.name}}</span>&nbsp;
+              </h4>
+              <h4 class="panel-title" ng-show="element.type == 'collapse_open' || element.type == 'collapse_close'" data-toggle="collapse" href="#{{element.submit}}">
+                <span>{{element.name}}</span>&nbsp;<b class="pull-right glyphicon glyphicon-chevron-down accordion-toggle" ></b>
+              </h4>
+            </div>
+            <ul id="{{element.submit}}" class="panel-collapse collapse {{element.class}} list-group" >
+              <li class="list-group-item" ng-repeat="list_element in element.list"><a ng-click="getInformationFromServer(page, element.submit, list_element.submit);">{{list_element.name}}</a></li>
+            </ul>
+          </div>
+        </div>
+    </td>
+    <td style="vertical-align: top;">
+        <div class="information" ng-show="edit == false" ng-bind-html-unsafe="information"></div>
+    </td>
+     </tr>
+</table>
     <br>
     <div edit></div>
 

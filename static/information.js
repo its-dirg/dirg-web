@@ -6,15 +6,15 @@
 
     app.factory('informationFactory', function ($http) {
         return {
-            getInformation: function (page) {
-                return $http.get("/information", {params: { "page": page}});
+            getInformation: function (page, submeny_header, submeny_page) {
+                return $http.get("/information", {params: { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page}});
             },
             getFile: function (name, callback, toaster, scope) {
                 url = "/file?name=" + name
                 return $.get(url, callback).fail(function() {toaster.pop('error', "Notification", "Invalid request!"); scope.$apply();});
             },
-            saveInformation: function (page, html) {
-                return $http.post("/save", { "page": page, "html": html});
+            saveInformation: function (page, submeny_header, submeny_page, html) {
+                return $http.post("/save", { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page, "html": html});
             },
             changeUserAdmin: function (email, admin) {
                 return $http.post("/changeUserAdmin", { "email": email, "admin": admin});
@@ -60,6 +60,8 @@
         $scope.edit = false;
         //The current page the user is viewing.
         $scope.page = "";
+        $scope.submeny_header = "";
+        $scope.submeny_page = "";
         //Allows the user to change password
         $scope.allowChangePassword = false;
         //Allows the user to sign out.
@@ -112,21 +114,81 @@
 
         var getInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data;
+            setupSubmenu($scope.menu.right);
+            setupSubmenu($scope.menu.left);
             $scope.edit = false;
         };
 
         var saveInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data;
+            setupSubmenu($scope.menu.right);
+            setupSubmenu($scope.menu.left);
             $scope.edit = false;
             toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
+        var setupSubmenu = function(menu) {
+            breadcrum = "";
+            $scope.submenu = [];
+            for (var i=0;i<menu.length;i++) {
+                if (menu[i].submit == $scope.page) {
+                    breadcrum = menu[i].name;
+                    handleSubmenu(menu[i].submenu, breadcrum);
+                    break;
+                }
+                if (menu[i].children.length > 0) {
+                    for (var j=0;j<menu[i].children.length;j++) {
+                        if (menu[i].children[j].submit == $scope.page) {
+                            breadcrum = menu[i].name + " -> " + menu[i].children[j].name;
+                            handleSubmenu(menu[i].children[j].submenu, breadcrum);
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        var handleSubmenu = function(submenu, breadcrum) {
+            if ($scope.submeny_header == "" || $scope.submeny_page == "" || typeof $scope.submeny_header === "undefined" || typeof $scope.submeny_page === "undefined") {
+                $scope.submeny_header = submenu[0].submit;
+                $scope.submeny_page = submenu[0].list[0].submit;
+            }
+            if (submenu.length > 0) {
+                for (var i=0;i<submenu.length;i++){
+                    if (submenu[i].type == "collapse_open") {
+                        submenu[i].class = "in";
+                    }
+                    else if (submenu[i].type == "collapse_close") {
+                        submenu[i].class = "";
+                    } else {
+                        submenu[i].class = "in";
+                    }
+
+                    if (submenu[i].submit == $scope.submeny_header) {
+                        breadcrum += " -> " + submenu[i].name;
+                        if (submenu[i].list.length > 0) {
+                            for(var j=0;j<submenu[i].list.length;j++){
+                                if (submenu[i].list[j].submit==$scope.submeny_page) {
+                                    breadcrum += " -> " + submenu[i].list[j].name;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $scope.submenu = submenu;
+            $scope.headline = breadcrum;
+        }
+
+
         var fetchMenuSuccessCallback = function (data, status, headers, config) {
             try {
-                $scope.getInformationFromServer(data.left[0].submit, data.left[0].name);
+                $scope.getInformationFromServer(data.left[0].submit);
             } catch(e) {
                 try {
-                    $scope.getInformationFromServer(data.right[0].submit, data.left[0].name);
+                    $scope.getInformationFromServer(data.right[0].submit);
                 } catch(e) {
 
                 }
@@ -190,12 +252,20 @@
             errorCallback(data, status, headers, config);
         };
 
-        $scope.getInformationFromServer = function (page, name) {
+        $scope.getInformationFromServer = function (page, submeny_header, submeny_page) {
             if (page != "") {
+                if (typeof submeny_header !== 'undefined') {
+                    $scope.submeny_header = submeny_header;
+                    if (typeof submeny_page !== 'undefined') {
+                        $scope.submeny_page = submeny_page;
+                    }
+                } else {
+                    $scope.submeny_header = "";
+                    $scope.submeny_page = "";
+                }
                 $scope.allowedEdit = $scope.oldAllowedEdit;
-                $scope.headline=name;
                 $scope.page = page;
-                informationFactory.getInformation(page).success(getInformationSuccessCallback).error(errorCallback);
+                informationFactory.getInformation(page,submeny_header, submeny_page).success(getInformationSuccessCallback).error(errorCallback);
             }
         };
 
@@ -215,7 +285,7 @@
 
         $scope.savePage = function () {
             if ($scope.allowedEdit) {
-                informationFactory.saveInformation($scope.page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
+                informationFactory.saveInformation($scope.page, $scope.submeny_header, $scope.submeny_page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
             }
         };
 
