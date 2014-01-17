@@ -42,6 +42,7 @@ Please view static/test.js for more example of angular and toaster.
 
 <%block name="header">
     ${parent.header()}
+    <base href="/"/>
 </%block>
 
 <%block name="headline">

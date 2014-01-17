@@ -1,7 +1,6 @@
 /**
  * Created by haho0032 on 2013-12-02.
  */
-
     var app = angular.module('main', ['toaster']);
 
     app.factory('informationFactory', function ($http) {
@@ -29,6 +28,8 @@
                 return $http.post("/deleteuser", { "email": email});
             },
             signin: function (user, password) {
+                pageurl = "/signin";
+                window.history.pushState({path:pageurl},'',pageurl);
                 return $http.get("/signin", {params: { "user": user, "password": password}});
             },
             invite: function(forename, surname, email, type){
