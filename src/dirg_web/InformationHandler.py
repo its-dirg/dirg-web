@@ -401,20 +401,20 @@ class Information(object):
                 return self.service_error("Invalid request!")
             page_ok = self.validate_page(page)
 
-            submeny_header = ""
-            submeny_page = ""
+            submenu_header = ""
+            submenu_page = ""
 
-            if "submeny_header" in self.parameters and "submeny_page" in self.parameters:
-                if len(self.parameters["submeny_header"]) > 0 and len(self.parameters["submeny_page"]) > 0:
-                    submeny_header = "." + self.parameters["submeny_header"]
-                    submeny_page = "." + self.parameters["submeny_page"]
+            if "submenu_header" in self.parameters and "submenu_page" in self.parameters:
+                if len(self.parameters["submenu_header"]) > 0 and len(self.parameters["submenu_page"]) > 0:
+                    submenu_header = "." + self.parameters["submenu_header"]
+                    submenu_page = "." + self.parameters["submenu_page"]
                     submenu = self.get_submenu(page)
-                    page_ok = self.validate_submenu(submenu, self.parameters["submeny_header"],
-                                                self.parameters["submeny_page"])
+                    page_ok = self.validate_submenu(submenu, self.parameters["submenu_header"],
+                                                    self.parameters["submenu_page"])
 
             if not page_ok:
                 return self.service_error("Invalid request!")
-            file_ = self.information_path + page + submeny_header + submeny_page + self.file_ending
+            file_ = self.information_path + page + submenu_header + submenu_page + self.file_ending
             try:
                 fp = open(file_, 'r')
                 text = fp.read()
@@ -422,7 +422,7 @@ class Information(object):
                 if len((text.strip())) > 0:
                     ts = time.time()
                     timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-                    backup_file = self.backup_path + page + submeny_header + submeny_page + "_" + \
+                    backup_file = self.backup_path + page + submenu_header + submenu_page + "_" + \
                                   timestamp + self.file_ending
                     fp = open(backup_file, 'w')
                     fp.write(text)
@@ -476,10 +476,13 @@ class Information(object):
         except Exception as ex:
             return self.service_error("The application is not working, please contact an administrator.", ex, True)
 
+    def read_menu_into_cache(self, file_):
+        text = open(file_).read()
+        self.cache["menu"] = json.loads(text)
+
     def handle_menu(self, file_):
         try:
-            text = open(file_).read()
-            self.cache["menu"] = json.loads(text)
+            self.read_menu_into_cache(file_)
             return self.return_json(json.dumps(self.filter_menu(copy.deepcopy(self.cache["menu"]))))
         except IOError as ex:
             return self.service_error("No menu file can be found!", ex, True)
@@ -535,26 +538,30 @@ class Information(object):
 
     def validate_page(self, page):
         menu = self.get_menu()
-        page_ok = False
-        if "left" in menu:
-            page_ok = self.find_page(page, menu["left"])
-        if "right" in menu and page_ok is not True:
-            page_ok = self.find_page(page, menu["right"])
-        if not page_ok:
+        if menu is not None:
             page_ok = False
-        return page_ok
+            if "left" in menu:
+                page_ok = self.find_page(page, menu["left"])
+            if "right" in menu and page_ok is not True:
+                page_ok = self.find_page(page, menu["right"])
+            if not page_ok:
+                page_ok = False
+            return page_ok
+        return False
 
     def get_menu(self):
         if "menu" not in self.cache or self.cache["menu"] is None:
-            self.handle_menu(self.menu_file)
+            self.read_menu_into_cache(self.menu_file)
         menu = copy.deepcopy(self.cache["menu"])
         return self.filter_menu(menu)
 
     def get_submenu(self, page):
         menu = self.get_menu()
-        submenu = self.find_submenu(page, menu["right"])
-        if submenu is None:
-            submenu = self.find_submenu(page, menu["left"])
+        submenu = None
+        if menu is not None:
+            submenu = self.find_submenu(page, menu["right"])
+            if submenu is None:
+                submenu = self.find_submenu(page, menu["left"])
         return submenu
 
     def find_submenu(self, page, menu):
@@ -576,39 +583,41 @@ class Information(object):
         return False
 
     def get_information(self, page):
-        submeny_header = ""
-        submeny_page = ""
-        submeny_header_file = ""
-        submeny_page_file = ""
+
+        submenu_header = ""
+        submenu_page = ""
+        submenu_header_file = ""
+        submenu_page_file = ""
+
         if self.session.is_page_set():
-            page, submeny_header, submeny_page = self.session.get_page()
-            self.parameters["submeny_header"] = submeny_header
-            self.parameters["submeny_page"] = submeny_page
+            page, submenu_header, submenu_page = self.session.get_page()
+            self.parameters["submenu_header"] = submenu_header
+            self.parameters["submenu_page"] = submenu_page
             self.session.clear_page()
 
         text = " "
         page_ok = self.validate_page(page)
 
         submenu = self.get_submenu(page)
-        if "submeny_header" in self.parameters and "submeny_page" in self.parameters:
-            if len(self.parameters["submeny_header"]) > 0 and len(self.parameters["submeny_page"]) > 0:
-                submeny_header = self.parameters["submeny_header"]
-                submeny_page = self.parameters["submeny_page"]
-                submeny_header_file = "." + submeny_header
-                submeny_page_file = "." + submeny_page
-                page_ok = self.validate_submenu(submenu, self.parameters["submeny_header"],
-                                                self.parameters["submeny_page"])
+        if "submenu_header" in self.parameters and "submenu_page" in self.parameters:
+            if len(self.parameters["submenu_header"]) > 0 and len(self.parameters["submenu_page"]) > 0:
+                submenu_header = self.parameters["submenu_header"]
+                submenu_page = self.parameters["submenu_page"]
+                submenu_header_file = "." + submenu_header
+                submenu_page_file = "." + submenu_page
+                page_ok = self.validate_submenu(submenu, self.parameters["submenu_header"],
+                                                self.parameters["submenu_page"])
         else:
             if submenu is not None and len(submenu) > 0 and len(submenu[0]["list"]) > 0:
-                submeny_header = submenu[0]["submit"]
-                submeny_page = submenu[0]["list"][0]["submit"]
-                submeny_header_file = "." + submeny_header
-                submeny_page_file = "." + submeny_page
+                submenu_header = submenu[0]["submit"]
+                submenu_page = submenu[0]["list"][0]["submit"]
+                submenu_header_file = "." + submenu_header
+                submenu_page_file = "." + submenu_page
 
         if not page_ok:
             return False, text, "", "", ""
 
-        file_ = self.information_path + page + submeny_header_file + submeny_page_file + self.file_ending
+        file_ = self.information_path + page + submenu_header_file + submenu_page_file + self.file_ending
         try:
             fp = open(file_, 'r')
             text = fp.read()
@@ -619,33 +628,34 @@ class Information(object):
             fp = open(file_, 'w')
             fp.close()
 
-        return True, text, page, submeny_header, submeny_page
+        return True, text, page, submenu_header, submenu_page
 
     def handle_viewpage(self, path):
+
         parameters = path.split("/")
         if len(parameters) == 2:
             page = parameters[1]
         elif len(parameters) == 4:
             page = parameters[1]
-            self.parameters["submeny_header"] = parameters[2]
-            self.parameters["submeny_page"] = parameters[3]
+            self.parameters["submenu_header"] = parameters[2]
+            self.parameters["submenu_page"] = parameters[3]
         else:
             return self.html_error("No such page can be found for you!")
 
-        page_ok, text, page, submenu_header, submeny_page = self.get_information(page)
+        page_ok, text, page, submenu_header, submenu_page = self.get_information(page)
         if not page_ok:
             return self.html_error("No such page can be found for you!")
 
-        self.session.setup_page(page, submenu_header, submeny_page)
+        self.session.setup_page(page, submenu_header, submenu_page)
 
         return self.handle_index()
 
     def handle_information(self, page):
-        page_ok, text, page, submenu_header, submeny_page = self.get_information(page)
+        page_ok, text, page, submenu_header, submenu_page = self.get_information(page)
         if not page_ok:
             return self.service_error("Invalid request!")
 
-        data = {"html": text, "page": page, "submenu_header": submenu_header, "submenu_page": submeny_page}
+        data = {"html": text, "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page}
 
         return self.return_json(json.dumps(data))
 
@@ -700,7 +710,7 @@ class Information(object):
                             text = " "
                         fp.close()
                     except IOError:
-                            pass
+                        pass
 
                     if len((text.strip())) > 0:
                         ts = time.time()

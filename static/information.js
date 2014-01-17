@@ -5,15 +5,15 @@
 
     app.factory('informationFactory', function ($http, serviceBasePath) {
         return {
-            getInformation: function (page, submeny_header, submeny_page) {
-                return $http.get(serviceBasePath + "/information", {params: { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page}});
+            getInformation: function (page, submenu_header, submenu_page) {
+                return $http.get(serviceBasePath + "/information", {params: { "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page}});
             },
             getFile: function (name, callback, toaster, scope) {
                 url = serviceBasePath + "/file?name=" + name
                 return $.get(url, callback).fail(function() {toaster.pop('error', "Notification", "Invalid request!"); scope.$apply();});
             },
-            saveInformation: function (page, submeny_header, submeny_page, html) {
-                return $http.post(serviceBasePath + "/save", { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page, "html": html});
+            saveInformation: function (page, submenu_header, submenu_page, html) {
+                return $http.post(serviceBasePath + "/save", { "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page, "html": html});
             },
             changeUserAdmin: function (email, admin) {
                 return $http.post(serviceBasePath + "/changeUserAdmin", { "email": email, "admin": admin});
@@ -60,8 +60,8 @@
         //The current page the user is viewing.
         $scope.page = "";
         $scope.hideSubmenu = false;
-        $scope.submeny_header = "";
-        $scope.submeny_page = "";
+        $scope.submenu_header = "";
+        $scope.submenu_page = "";
         //Allows the user to change password
         $scope.allowChangePassword = false;
         //Allows the user to sign out.
@@ -265,20 +265,10 @@
             errorCallback(data, status, headers, config);
         };
 
-        $scope.getInformationFromServer = function (page, submeny_header, submeny_page) {
+        $scope.getInformationFromServer = function (page, submenu_header, submenu_page) {
             if (page != "") {
-                if (typeof submeny_header !== 'undefined') {
-                    //$scope.submeny_header = submeny_header;
-                    if (typeof submeny_page !== 'undefined') {
-                        //$scope.submeny_page = submeny_page;
-                    }
-                } else {
-                    //$scope.submeny_header = "";
-                    //$scope.submeny_page = "";
-                }
                 $scope.allowedEdit = $scope.oldAllowedEdit;
-                //$scope.page = page;
-                informationFactory.getInformation(page,submeny_header, submeny_page).success(getInformationSuccessCallback).error(errorCallback);
+                informationFactory.getInformation(page,submenu_header, submenu_page).success(getInformationSuccessCallback).error(errorCallback);
             }
         };
 
@@ -298,7 +288,7 @@
 
         $scope.savePage = function () {
             if ($scope.allowedEdit) {
-                informationFactory.saveInformation($scope.page, $scope.submeny_header, $scope.submeny_page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
+                informationFactory.saveInformation($scope.page, $scope.submenu_header, $scope.submenu_page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
             }
         };
 

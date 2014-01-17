@@ -185,11 +185,11 @@ class SecureSession(Session):
         #    auth_object[self.ALLOW_SIGN_OUT] = self.ALLOW_FALSE
         return auth_object
 
-    def setup_page(self, page, submenu_header, submeny_page):
+    def setup_page(self, page, submenu_header, submenu_page):
         self[self.DATA_IS_SET] = True
         self[self.DATA_PAGE] = page
         self[self.DATA_SUBMENU_HEADER] = submenu_header
-        self[self.DATA_SUBMENU_PAGE] = submeny_page
+        self[self.DATA_SUBMENU_PAGE] = submenu_page
 
     def is_page_set(self):
         return self[self.DATA_IS_SET]
