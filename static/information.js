@@ -1,39 +1,37 @@
 /**
  * Created by haho0032 on 2013-12-02.
  */
-    var app = angular.module('main', ['toaster']);
+    //var app = angular.module('main', ['toaster']).constant("serviceBasePath", "https://localhost:4646")
 
-    app.factory('informationFactory', function ($http) {
+    app.factory('informationFactory', function ($http, serviceBasePath) {
         return {
             getInformation: function (page, submeny_header, submeny_page) {
-                return $http.get("/information", {params: { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page}});
+                return $http.get(serviceBasePath + "/information", {params: { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page}});
             },
             getFile: function (name, callback, toaster, scope) {
-                url = "/file?name=" + name
+                url = serviceBasePath + "/file?name=" + name
                 return $.get(url, callback).fail(function() {toaster.pop('error', "Notification", "Invalid request!"); scope.$apply();});
             },
             saveInformation: function (page, submeny_header, submeny_page, html) {
-                return $http.post("/save", { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page, "html": html});
+                return $http.post(serviceBasePath + "/save", { "page": page, "submeny_header": submeny_header, "submeny_page": submeny_page, "html": html});
             },
             changeUserAdmin: function (email, admin) {
-                return $http.post("/changeUserAdmin", { "email": email, "admin": admin});
+                return $http.post(serviceBasePath + "/changeUserAdmin", { "email": email, "admin": admin});
             },
             changeUserValid: function (email, valid) {
-                return $http.post("/changeUserValid", { "email": email, "valid": valid});
+                return $http.post(serviceBasePath + "/changeUserValid", { "email": email, "valid": valid});
             },
             changepasswd: function (password, password1, password2) {
-                return $http.post("/changepasswd", { "password": password, "password1": password1, "password2": password2});
+                return $http.post(serviceBasePath + "/changepasswd", { "password": password, "password1": password1, "password2": password2});
             },
             deleteUser: function (email) {
-                return $http.post("/deleteuser", { "email": email});
+                return $http.post(serviceBasePath + "/deleteuser", { "email": email});
             },
             signin: function (user, password) {
-                pageurl = "/signin";
-                window.history.pushState({path:pageurl},'',pageurl);
-                return $http.get("/signin", {params: { "user": user, "password": password}});
+                return $http.get(serviceBasePath + "/signin", {params: { "user": user, "password": password}});
             },
             invite: function(forename, surname, email, type){
-                return $http.get("/invite", {params: {
+                return $http.get(serviceBasePath + "/invite", {params: {
                     "forename": forename,
                     "surname": surname,
                     "email": email,
@@ -41,13 +39,13 @@
                 }});
             },
             adminUsers: function() {
-                return $http.get("/adminUsers");
+                return $http.get(serviceBasePath + "/adminUsers");
             },
             signout: function () {
-                return $http.post("/signout", {});
+                return $http.post(serviceBasePath + "/signout", {});
             },
             fetchMenu: function () {
-                return $http.post('/menu', {});
+                return $http.post(serviceBasePath + '/menu', {});
             }
         };
     });
@@ -61,6 +59,7 @@
         $scope.edit = false;
         //The current page the user is viewing.
         $scope.page = "";
+        $scope.hideSubmenu = false;
         $scope.submeny_header = "";
         $scope.submeny_page = "";
         //Allows the user to change password
@@ -118,6 +117,7 @@
             $scope.submenu_header = data.submenu_header;
             $scope.submenu_page = data.submenu_page;
             $scope.page = data.page;
+            $scope.hideSubmenu = false;
             breadcrum = "";
             breadcrum = setupSubmenu($scope.menu.right, breadcrum);
             breadcrum = setupSubmenu($scope.menu.left, breadcrum);
@@ -178,12 +178,11 @@
                     } else {
                         submenu[i].class = "in";
                     }
-
-                    if (submenu[i].submit == $scope.submeny_header) {
+                    if (submenu[i].submit == $scope.submenu_header) {
                         breadcrum += " -> " + submenu[i].name;
                         if (submenu[i].list.length > 0) {
                             for(var j=0;j<submenu[i].list.length;j++){
-                                if (submenu[i].list[j].submit==$scope.submeny_page) {
+                                if (submenu[i].list[j].submit==$scope.submenu_page) {
                                     breadcrum += " -> " + submenu[i].list[j].name;
                                     break;
                                 }
@@ -457,8 +456,9 @@
             $scope.configMenu = true;
             $scope.oldAllowedEdit = $scope.allowedEdit;
             $scope.allowedEdit = false;
+            $scope.hideSubmenu = true;
             $scope.information = text +
-                '<form action="savefile" class="form" role="form" method="post">' +
+                '<form action="/savefile" class="form" role="form" method="post">' +
                     '<input type="hidden" id="name" name="name" ng-model="name" value="' + name + '" >' +
                     '<button type="submit" class="btn btn-primary">Save</button>' +
                     '<div class="form-group">' +

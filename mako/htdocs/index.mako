@@ -16,8 +16,11 @@ Toaster is used for displaying notifications in a nice way.
 
 Please view static/test.js for more example of angular and toaster.
 -->
-
+<%block name="meta">
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'"/>-->
+</%block>
 <%block name="script">
+
     <!-- Add more script imports here! -->
     ${parent.script()}
      <script type="text/javascript" src="/static/tinymce/tinymce.min.js"></script>
@@ -42,7 +45,6 @@ Please view static/test.js for more example of angular and toaster.
 
 <%block name="header">
     ${parent.header()}
-    <base href="/"/>
 </%block>
 
 <%block name="headline">
@@ -67,25 +69,25 @@ Please view static/test.js for more example of angular and toaster.
 
 <table ng-show="edit == false" class="main">
     <tr>
-    <td>
-        <div class="panel-group" id="accordion" style="padding-top: 15px;">
+    <td style="width: 1px;">
+        <div class="panel-group" id="accordion" style="padding-top: 15px;" ng-show="hideSubmenu == false">
             <div class="panel panel-default" ng-repeat="element in submenu">
             <div class="panel-heading">
               <h4 class="panel-title" ng-show="element.type == 'static'" >
-                <span>{{element.name}}</span>&nbsp;
+                <span style="white-space:nowrap;">{{element.name}}&nbsp;</span>
               </h4>
               <h4 class="panel-title" ng-show="element.type == 'collapse_open' || element.type == 'collapse_close'" data-toggle="collapse" href="#{{element.submit}}">
-                <span>{{element.name}}</span>&nbsp;<b class="pull-right glyphicon glyphicon-chevron-down accordion-toggle" ></b>
+                <span style="white-space:nowrap;">{{element.name}}&nbsp;<span class="glyphicon glyphicon-chevron-down"> </span></span>
               </h4>
             </div>
             <ul id="{{element.submit}}" class="panel-collapse collapse {{element.class}} list-group" >
-              <li class="list-group-item" ng-repeat="list_element in element.list"><a ng-click="getInformationFromServer(page, element.submit, list_element.submit);">{{list_element.name}}</a></li>
+              <li class="list-group-item" ng-repeat="list_element in element.list"><a ng-click="getInformationFromServer(page, element.submit, list_element.submit);" style="white-space:nowrap;">{{list_element.name}}</a></li>
             </ul>
           </div>
         </div>
     </td>
     <td>
-        <div class="information" ng-show="edit == false" ng-bind-html-unsafe="information"></div>
+        <div class="information" ng-show="edit == false  && information != ''" ng-bind-html-unsafe="information"></div>
     </td>
      </tr>
 </table>
@@ -113,7 +115,7 @@ Please view static/test.js for more example of angular and toaster.
               </div>
               <button type="submit" class="btn btn-primary">Sign in</button>
             </form>
-            <form action="spverify" method="post" ng-show="authMethod == 'sp'">
+            <form action="/spverify" method="post" ng-show="authMethod == 'sp'">
               <button type="submit" class="btn btn-primary">Sign in</button>
             </form>
           </div>
@@ -260,6 +262,7 @@ Please view static/test.js for more example of angular and toaster.
 
 <%block name="footer">
     </div>
+    <script type="text/javascript" src="/information_init_app_js"></script>
     <script type="text/javascript" src="/static/information.js"></script>
     ${parent.footer()}
 </%block>

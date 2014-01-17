@@ -12,7 +12,7 @@ __author__ = 'haho0032'
 
 class Information(object):
     def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods, sqlite_db,
-                 email_config, sphandler):
+                 email_config, sphandler, base):
         """
         Constructor for the class.
         :param environ:        WSGI enviroment
@@ -30,6 +30,7 @@ class Information(object):
         self.auth_methods = auth_methods
         self.sqlite_db = sqlite_db
         self.email_config = email_config
+        self.base = base
         self.sphandler = sphandler
         self.verify_path = "/verify"
         self.param_tag = "tag"
@@ -61,7 +62,8 @@ class Information(object):
             "deleteuser",
             "changepasswd",
             "file",
-            "savefile"
+            "savefile",
+            "information_init_app_js"
         ]
 
         if self.banned_users not in self.cache:
@@ -114,14 +116,27 @@ class Information(object):
             return self.change_passwd()
         if path[:4] == "page":
             return self.handle_viewpage(path)
+        if path == "information_init_app_js":
+            return self.handle_information_init_app_js()
         else:
             return self.handle_index()
 
     def handle_index(self):
         resp = Response(mako_template="index.mako",
                         template_lookup=self.lookup,
+                        headers=[("Content-Security-Policy", "")])
+
+        #("Content-Security-Policy", "script-src 'self'"),
+        argv = {
+        }
+        return resp(self.environ, self.start_response, **argv)
+
+    def handle_information_init_app_js(self):
+        resp = Response(mako_template="information_init_app_js.mako",
+                        template_lookup=self.lookup,
                         headers=[])
         argv = {
+            "base": self.base
         }
         return resp(self.environ, self.start_response, **argv)
 

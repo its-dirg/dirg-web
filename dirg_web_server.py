@@ -52,7 +52,8 @@ def application(environ, start_response):
     parameters = http_helper.query_dict()
 
     information = Information(environ, start_response, session, logger, parameters, LOOKUP, CACHE,
-                              config.AUTHENTICATION_LIST , config.SQLITE_DB, config.EMAIL_CONFIG, sphandler)
+                              config.AUTHENTICATION_LIST , config.SQLITE_DB, config.EMAIL_CONFIG, sphandler,
+                              config.ISSUER)
 
     path = http_helper.path()
 
