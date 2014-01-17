@@ -1,3 +1,12 @@
+table.main {
+    width: 100%;
+}
+
+table.main td {
+    vertical-align: top;
+}
+
+
 .list-group-item {
     padding: 0px;
     padding-left: 15px;

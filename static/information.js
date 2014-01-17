@@ -3,6 +3,11 @@
  */
     var app = angular.module('main', ['toaster']);
 
+    app.config(function($locationProvider, $routeProvider) {
+        $locationProvider.html5Mode(true);
+        alert($location.path());
+    });
+
     app.factory('informationFactory', function ($http) {
         return {
             getInformation: function (page, submeny_header, submeny_page) {

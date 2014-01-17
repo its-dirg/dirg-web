@@ -65,9 +65,9 @@ Please view static/test.js for more example of angular and toaster.
 
 
 
-<table ng-show="edit == false">
+<table ng-show="edit == false" class="main">
     <tr>
-    <td style="vertical-align: top;">
+    <td>
         <div class="panel-group" id="accordion" style="padding-top: 15px;">
             <div class="panel panel-default" ng-repeat="element in submenu">
             <div class="panel-heading">
@@ -84,7 +84,7 @@ Please view static/test.js for more example of angular and toaster.
           </div>
         </div>
     </td>
-    <td style="vertical-align: top;">
+    <td>
         <div class="information" ng-show="edit == false" ng-bind-html-unsafe="information"></div>
     </td>
      </tr>
