@@ -1,35 +1,111 @@
 /**
  * Created by haho0032 on 2013-12-02.
  */
+    //The initiation of app is moved to the mako folder.
     //var app = angular.module('main', ['toaster']).constant("serviceBasePath", "https://localhost:4646")
 
+    //Initialization of the angularjs factory informationFactory.
     app.factory('informationFactory', function ($http, serviceBasePath) {
         return {
+            /**
+             * Retrivies the HTML content for a CMS page.
+             * @param page           The submit value for a page in the menu.
+             * @param submenu_header The sumbit value for a submenu. (May be empty)
+             * @param submenu_page   The submit value for a list element in submenu. (May be empty)
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+
+             */
             getInformation: function (page, submenu_header, submenu_page) {
                 return $http.get(serviceBasePath + "/information", {params: { "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page}});
             },
+            /**
+             * Retrives the text for a menu file or custom css file.
+             * @param name      "menu" for menu file or "css" for the custom css file.
+             * @param callback  Callback function for a successfull response.
+             * @param toaster   Toaster object, to present error message.
+             * @param scope     Angularjs scope.
+             * @returns Jquery $.get object
+             */
             getFile: function (name, callback, toaster, scope) {
                 url = serviceBasePath + "/file?name=" + name
                 return $.get(url, callback).fail(function() {toaster.pop('error', "Notification", "Invalid request!"); scope.$apply();});
             },
+            /**
+             * Will save the HTML content for a CMS page.
+             * @param page           The submit value for a page in the menu.
+             * @param submenu_header The sumbit value for a submenu. (May be empty)
+             * @param submenu_page   The submit value for a list element in submenu. (May be empty)
+             * @param html           The HTML text as a string.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             saveInformation: function (page, submenu_header, submenu_page, html) {
                 return $http.post(serviceBasePath + "/save", { "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page, "html": html});
             },
+            /**
+             * Will change administrator status for a user.
+             * @param email E-mail for the user.
+             * @param admin 1=set user to admin, otherwise 0.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             changeUserAdmin: function (email, admin) {
                 return $http.post(serviceBasePath + "/changeUserAdmin", { "email": email, "admin": admin});
             },
+            /**
+             * Will change valid status for a user. An invalid user is a banned user.
+             * @param email E-mail for the user.
+             * @param valid 1=sets user to valid and 0= sets user to banned.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             changeUserValid: function (email, valid) {
                 return $http.post(serviceBasePath + "/changeUserValid", { "email": email, "valid": valid});
             },
+            /**
+             * Changes password for a loged in user.
+             * @param password  Current password.
+             * @param password1 New password.
+             * @param password2 New passwword.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             changepasswd: function (password, password1, password2) {
                 return $http.post(serviceBasePath + "/changepasswd", { "password": password, "password1": password1, "password2": password2});
             },
+            /**
+             * Deletes a user from the application.
+             * @param email E-mail for the user.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             deleteUser: function (email) {
                 return $http.post(serviceBasePath + "/deleteuser", { "email": email});
             },
+            /**
+             * Signs in a user with username/password.
+             * @param user      Username for the user.
+             * @param password  The password connected to the given username.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             signin: function (user, password) {
                 return $http.get(serviceBasePath + "/signin", {params: { "user": user, "password": password}});
             },
+            /**
+             * Invite a new user to the application. Will send an inventation with e-mail.
+             * @param forename First name for the user.
+             * @param surname  Last name for the user.
+             * @param email    E-mail for the user.
+             * @param type     Type of authentication method. Can be "pass", "idp", "pass_new" or "idp_new".
+             *                 pass     = invite an existing user to use username/password.
+             *                 idp      = invite an existing user to use SAML IdP.
+             *                 pass_new = invite a new user to use username/password.
+             *                 idp_new  = invite a new user to use SAML IdP.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             invite: function(forename, surname, email, type){
                 return $http.get(serviceBasePath + "/invite", {params: {
                     "forename": forename,
@@ -38,12 +114,28 @@
                     "type": type
                 }});
             },
+            /**
+             * Retrieves all users that can be administrated.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             adminUsers: function() {
                 return $http.get(serviceBasePath + "/adminUsers");
             },
+            /**
+             * Sign out the user in the application session.
+             *
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             signout: function () {
                 return $http.post(serviceBasePath + "/signout", {});
             },
+            /**
+             * Fetch the menu for the application session user.
+             * @returns A object returnobject, where the following methods should be called
+             *          returnobject.success(sucess_callback_function()).error(error_callback_function());
+             */
             fetchMenu: function () {
                 return $http.post(serviceBasePath + '/menu', {});
             }
@@ -57,10 +149,13 @@
         $scope.information = "";
         //True if the user is editing a page, otherwise false.
         $scope.edit = false;
-        //The current page the user is viewing.
+        //The current page the user is viewing. The submit value for a page in the menu.
         $scope.page = "";
+        //True if the submenu can be visible to the user, otherwise false.
         $scope.hideSubmenu = false;
+        //The id for the current submenu. The sumbit value for a submenu. (May be empty)
         $scope.submenu_header = "";
+        //The id for the current submenu page. The submit value for a list element in submenu. (May be empty)
         $scope.submenu_page = "";
         //Allows the user to change password
         $scope.allowChangePassword = false;
@@ -99,9 +194,13 @@
         //Temp. menu used during menu configuration.
         //This functionality is not fully implemented and do not work!
         $scope.tmpmenu = "";
-
-
+        //The current invite type.
+        //pass     = invite an existing user to use username/password.
+        //idp      = invite an existing user to use SAML IdP.
+        //pass_new = invite a new user to use username/password.
+        //idp_new  = invite a new user to use SAML IdP.
         $scope.inviteType = "idp_new";
+        //Properties for the inventation dropdown.
         $scope.invite_prop = {   "type": "select",
                     "name": "Invite user to sign in with SAML.",
                     "value": "idp_new",
@@ -112,6 +211,9 @@
                 };
 
 
+        /**
+         * Handles the response from the application server when HTML content for a CMS page is retrieved.
+         */
         var getInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data.html;
             $scope.submenu_header = data.submenu_header;
@@ -134,14 +236,21 @@
             $scope.$apply();
         };
 
+        /**
+         * Handles the response from the application server when HTML content for a CMS page is saved.
+         */
         var saveInformationSuccessCallback = function (data, status, headers, config) {
             $scope.information = data;
-            setupSubmenu($scope.menu.right);
-            setupSubmenu($scope.menu.left);
             $scope.edit = false;
             toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
+        /**
+         * Will find and configure the submenu for the current page.
+         * @param menu      Right($scope.menu.right) or left($scope.menu.left) top menu.
+         * @param breadcrum The current breadcrum.
+         * @returns The new breadcrum.
+         */
         var setupSubmenu = function(menu, breadcrum) {
             $scope.submenu = [];
             for (var i=0;i<menu.length;i++) {
@@ -167,6 +276,12 @@
             return breadcrum
         }
 
+        /**
+         * Will configure a given submenu.
+         * @param submenu   The submenu to be configured.
+         * @param breadcrum The current breadcrum.
+         * @returns The new breadcrum.
+         */
         var handleSubmenu = function(submenu, breadcrum) {
             if (submenu.length > 0) {
                 for (var i=0;i<submenu.length;i++){
@@ -195,7 +310,9 @@
             return breadcrum
         }
 
-
+        /**
+         * Handles the response from the application server when a menu is returned.
+         */
         var fetchMenuSuccessCallback = function (data, status, headers, config) {
             try {
                 $scope.getInformationFromServer(data.left[0].submit);
@@ -209,6 +326,9 @@
             $scope.menu=data;
         };
 
+        /**
+         * Handles the response from the application server when user signed in with username/password.
+         */
         var signinSuccessCallback = function (data, status, headers, config) {
             $('#modalSignin').modal('hide');
             $scope.handleAuthResponse(data);
@@ -216,55 +336,93 @@
             //toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
+        /**
+         * Handles the response from the application server when a list of user that can be administrated is returned.
+         * Using modal window.
+         */
         var adminUsersSuccessCallback = function (data, status, headers, config) {
             $scope.users = data;
             $('#modalAdministrateUsers').modal('show');
         };
 
+        /**
+         * Handles the response from the application server when a list of user that can be administrated is returned.
+         * Not using modal window.
+         */
         var adminUsersSuccessCallbackNoneModal = function (data, status, headers, config) {
             $scope.users = data;
         };
 
+        /**
+         *  Handles the response from the application server when a the administrator flag for a user has been changed.
+         */
         var changeUserAdminSuccessCallback = function (data, status, headers, config) {
             toaster.pop('success', "Notification", data);
         };
 
+        /**
+         *  Handles the response from the application server when a the valid flag for a user has been changed.
+         */
         var changeUserValidSuccessCallback = function (data, status, headers, config) {
             toaster.pop('success', "Notification", data);
         };
 
+        /**
+         *  Handles the response from the application server when a the user changed password.
+         */
         var changepasswdSuccessCallback = function (data, status, headers, config) {
             $('#modalChangePassword').modal('hide');
             toaster.pop('success', "Notification", data);
         };
 
-
+        /**
+         *  Handles the response from the application server when a user has been removed.
+         */
         var deleteUserSuccessCallback = function (data, status, headers, config) {
             toaster.pop('success', "Notification", data);
             informationFactory.adminUsers().success(adminUsersSuccessCallbackNoneModal).error(errorCallback);
 
         };
 
-
+        /**
+         *  Handles the response from the application server when a user been invited to use the application.
+         */
         var inviteSuccessCallback = function (data, status, headers, config) {
          toaster.pop('success', "Notification", data);
             $('#modalInvite').modal('hide');
         };
 
+
+        /**
+         *  Handles the response from the application server when a user sign out.
+         */
         var signoutSuccessCallback = function (data, status, headers, config) {
             $scope.handleAuthResponse(data);
             $scope.fetchMenu();
             //toaster.pop('success', "Notification", "Successfully saved the page!");
         };
 
+        /**
+         *  Handles error responses from the application server.
+         */
         var errorCallback = function (data, status, headers, config) {
             toaster.pop('error', "Notification", data["ExceptionMessage"]);
         };
 
+        /**
+         *  Handles error responses from the application server.
+         */
         $scope.errorCallback_ = function (data, status, headers, config) {
             errorCallback(data, status, headers, config);
         };
 
+
+        /**
+         * Retrieves HTML content for a CMS page.
+         * @param page           The submit value for a page in the menu.
+         * @param submenu_header The sumbit value for a submenu. (May be empty)
+         * @param submenu_page   The submit value for a list element in submenu. (May be empty)
+         */
         $scope.getInformationFromServer = function (page, submenu_header, submenu_page) {
             if (page != "") {
                 $scope.allowedEdit = $scope.oldAllowedEdit;
@@ -272,26 +430,72 @@
             }
         };
 
+        /**
+         * Will fetch the current menu.
+         */
         $scope.fetchMenu = function () {
             informationFactory.fetchMenu().success(fetchMenuSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Will set how the user wants to authentice.
+         *
+         * Will also update the web page.
+         *
+         * Parameters are sent with angluarjs ng-model="prop.value"
+         * @ng-model-param prop.value Prefered authentication method. Can be pass for password and idp for SAML IdP.
+         */
         $scope.setAuthMethod = function () {
             $scope.authMethod = this.prop.value;
         };
 
+        /**
+         * Will set what kind of invite that should be sent.
+         *
+         * Will also update the web page.
+         *
+         * Parameters are sent with angluarjs ng-model="invite_prop.value"
+         * @ng-model-param prop.value Prefered authentication method. Can be:
+         *        pass     = existing user with username/password.
+         *        pass_new = new user with username/password.
+         *        idp      = existing user with SAML IdP.
+         *        idp_new  = new user with SAML IdP.
+         */
         $scope.setInviteType = function () {
             $scope.inviteType = this.invite_prop.value;
         };
 
 
-
+        /**
+         * Will save the current HTML page that is beeing edited with tinymce.
+         */
         $scope.savePage = function () {
             if ($scope.allowedEdit) {
                 informationFactory.saveInformation($scope.page, $scope.submenu_header, $scope.submenu_page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
             }
         };
 
+        /**
+         * This method will handle the autentication response.
+         * The response is actually the authorizartions  for the current user.
+         * @param authResponse The users authorizations in the application. Not a security layer, only for presentation.
+            '{"authenticated": "true",
+            "allowSignout": "true",
+            "allowUserChange": "true",
+            "allowedEdit": "true",
+            "allowConfig": "false",
+            "allowInvite": "true",
+            "allowChangePassword": "true"}'
+
+            Description:
+            authenticated:       True if the user is authenticated.
+            allowSignout:        True if the user can sign out from the application.
+            allowUserChange:     True if the user is allowed to administrate users.
+            allowedEdit:         True if the user is allowed to edit pages.
+            allowConfig:         True if the user is allowed to configure menu and css files.
+            allowInvite:         True if the user is allowed to invite other users.
+            allowChangePassword: True if the user is allowed to change the password.
+         */
         $scope.handleAuthResponse = function (authResponse) {
             if (authResponse.authMethods) {
                 $scope.prop = {   "type": "select",
@@ -315,6 +519,15 @@
             $scope.oldAllowedEdit = $scope.allowedEdit;
         };
 
+        /**
+         * Sign in a user with username/password.
+         *
+         * Parameters are sent with angluarjs ng-model="user" and ng-model="password"
+         *
+         * @ng-model-param user     The username.
+         * @ng-model-param password The password for the user.
+         *
+         */
         $scope.submitSignIn = function () {
             var user = this.user;
             var password = this.password;
@@ -323,7 +536,16 @@
             informationFactory.signin(user, password).success(signinSuccessCallback).error(errorCallback);
         };
 
-
+        /**
+         * Changes password for the user.
+         *
+         * Parameters are sent with angluarjs ng-model="password", ng-model="password1" and ng-model="password2"
+         *
+         * @ng-model-param password  The current password.
+         * @ng-model-param password1 New password.
+         * @ng-model-param password2 New password.
+         *
+         */
         $scope.submitChangePassword = function () {
             var password = this.password;
             var password1 = this.password1;
@@ -334,6 +556,16 @@
             informationFactory.changepasswd(password, password1, password2).success(changepasswdSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Invites a new user to the application.
+         *
+         * Parameters are sent with angluarjs ng-model="forename", ng-model="surname" and ng-model="email"
+         *
+         * @ng-model-param forename  First name
+         * @ng-model-param surname   Last name
+         * @ng-model-param email     E-mail where the invite should be sent.
+         *
+         */
         $scope.submitInvite = function () {
             var forename = this.forename;
             var surname = this.surname;
@@ -344,22 +576,37 @@
             informationFactory.invite(forename, surname, email, this.invite_prop.value).success(inviteSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Will close the modal window for signing in.
+         *
+         * Sets the angluarjs ng-modal parameters user and password to empty.
+         */
         $scope.closeSigning = function () {
             this.user = "";
             this.password = "";
             $('#modalSignin').modal('hide');
         };
 
+        /**
+         * Will show the modal window for signing in a user.
+         */
         $scope.signin = function () {
             $('#modalSignin').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Will show the modal window for changing password.
+         */
         $scope.changePassword = function () {
             $('#modalChangePassword').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Will close the modal window for changeing password.
+         * Sets the angluarjs ng-modal parameters password, password1 and password2 to empty.
+         */
         $scope.closeChangePassword = function () {
             this.password = "";
             this.password1 = "";
@@ -367,16 +614,26 @@
             $('#modalSignin').modal('hide');
         };
 
+        /**
+         * Will show the modal window for inviteing users.
+         */
         $scope.invite = function () {
             $('#modalInvite').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Will list all users in the user administration.
+         */
         $scope.adminUsers = function () {
             informationFactory.adminUsers().success(adminUsersSuccessCallback).error(errorCallback);
         };
 
 
+        /**
+         * Deletes a user.
+         * @param email The e-mail for a user.
+         */
         $scope.deleteUser = function (email) {
             /*if (confirm("Are you sure you want to delete the user with email " + email + "?")) {
                 informationFactory.deleteUser(email).success(deleteUserSuccessCallback).error(errorCallback);
@@ -392,6 +649,15 @@
             );
         };
 
+        /**
+         * Changes the administration flag for a users.
+         *
+         * Parameters are sent with angluarjs ng-model="admin"
+         *
+         * @ng-model-param admin  1 = user becomes administrator, 0 = user is no longer administrator.
+         *
+         * @param email The e-mail for a user.
+         */
         $scope.changeUserAdmin = function (email) {
             var admin = -1;
             if (this.admin == true) {
@@ -402,6 +668,15 @@
             informationFactory.changeUserAdmin(email, admin).success(changeUserAdminSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Changes the valid flag for a users.
+         *
+         * Parameters are sent with angluarjs ng-model="valid"
+         *
+         * @ng-model-param admin  1 = user is valid, 0 = user is banned.
+         *
+         * @param email The e-mail for a user.
+         */
         $scope.changeUserValid = function (email, valid) {
             valid = -1;
             if (this.valid == true) {
@@ -412,33 +687,63 @@
             informationFactory.changeUserValid(email, valid).success(changeUserValidSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Will show the modal window for changing password.
+         */
         $scope.changePassword = function () {
             $('#modalChangePassword').modal('show');
             //informationFactory.signin().success(signinSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Signs out the current user.
+         */
         $scope.signout = function () {
             informationFactory.signout().success(signoutSuccessCallback).error(errorCallback);
         };
 
+        /**
+         * Handles the response from the application server when the menu file has been retrieved.
+         * @param data      The contect of the menu file.
+         * @param status    Not used
+         */
         var getMenuFileSuccessCallback = function (data, status) {
             $scope.editFile($scope.menu.editmenu, "menu", "You can edit the menu on this page.", data);
             $scope.$apply();
         };
 
+        /**
+         * Handles the response from the application server when the custom css file has been retrieved.
+         * @param data      The contect of the css file.
+         * @param status    Not used
+         */
         var getCSSFileSuccessCallback = function (data, status) {
             $scope.editFile($scope.menu.css, "css", "Here you can edit your custom css.", data);
             $scope.$apply();
         };
 
+        /**
+         * Retrieves the custom css page.
+         */
         $scope.editCSS = function () {
             informationFactory.getFile("css", getCSSFileSuccessCallback, toaster, $scope);
         };
 
+        /**
+         * Retrieves the menu file.
+         */
         $scope.editMenu = function () {
             informationFactory.getFile("menu", getMenuFileSuccessCallback, toaster, $scope);
         };
 
+        /**
+         * Will setup the gui for editing custom files. For now you can only edit the menu and custom css file.
+         *
+         * @param header    Header (breadcrum)
+         * @param name      css for custom css file and menu for the menu.
+         * @param text      Text to be presented above the content.
+         * @param filetext  Content of menu or css file.
+         */
         $scope.editFile = function (header, name, text, filetext) {
             $scope.edit = false;
             $scope.oldHeadline = $scope.headline;
@@ -458,6 +763,9 @@
                 '</form>'
         };
 
+        /**
+         * Will set edit mode depending on the users authorization rules.
+         */
         $scope.editPage = function () {
             $scope.edit = $scope.allowedEdit;
 
@@ -465,7 +773,10 @@
 
     });
 
-
+    /**
+     * Yet to be developed.
+     * This is the beginning of a page for administrating the menu.
+     */
     app.directive('changeMenuValue', function() {
       return function(scope, element) {
         element.bind('change', function() {
@@ -475,6 +786,10 @@
       };
     });
 
+    /**
+     * Yet to be developed.
+     * This is the beginning of a page for administrating the menu.
+     */
     app.directive('editmenu', function($http) {
             return {
                 restrict: 'A',
@@ -491,7 +806,9 @@
             }
     });
 
-
+    /**
+     * Will fetch and display the menu.
+     */
     app.directive('menu', function($http) {
             return {
                 restrict: 'A',
@@ -504,6 +821,13 @@
 
     });
 
+    /**
+     * Will display tinymce editor when scope.edit is changed to True.
+     * If scope.edit is set to false, the tinymce editor is removed.
+     *
+     * Will insert the tinymce code into the element:
+     * <div edit></div>
+     */
     app.directive('edit', function($http) {
             return {
                 restrict: 'A',
