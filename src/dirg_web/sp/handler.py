@@ -15,16 +15,22 @@ logger = logging.getLogger(__name__)
 #SPHandler represent a SP client and acts separate on the application server.
 #The front end server can redirect to the sp to perform authentication.
 #The method handleIdPResponse will give the correct response after authentication.
-#The class SPAuthnMethodHandler is used to add SP authentication to the op server.
-#The class UserInfoSpHandler is used to make it possible to return the attributes collected by SP for the op_server.
 class SpHandler(object):
+    """
+    A SP client that performs authentication to a SAML IdP.
+    """
+
     #The session name that holds the pyOpSamlProxy.client.sp.util.Cache object for the user.
     SPHANDLERSSOCACHE = "sphandlerssocache"
 
     def __init__(self, _logger, metadata, conf_dir, config_name, sp_conf):
         """
         Constructor for the SpHandler.
-        :param _logger: A logger.
+        :param _logger:     A logger.
+        :param metadata:    Metadata XML text string. Represents a metadata file.
+        :param conf_dir     Path to the configuration file for the service provider client(this class).
+        :param config_name  Name of the configuration file for the service provider client(this class).
+        :param sp_conf      The configuration file as an python object.
         """
         #Log class. (see import logging)
         self.logger = _logger
@@ -78,9 +84,11 @@ class SpHandler(object):
 
     def handle_idp_response(self, response):
         """
-        Takes care of the response from an Idp and saves the users attributes in a timed cache.
+        Takes care of the response from an Idp.
+
         :param response: Saml response. (see project pysaml2 saml2.response.AuthnResponse)
-        :return: User identification
+
+        :return: User identification (eduPersonPrincipalName)
         """
         #uid = response.assertion.subject.name_id.text
         uid = response.ava['eduPersonPrincipalName']
@@ -91,13 +99,17 @@ class SpHandler(object):
     def handle_sp_requests(self, environ, start_response, path, session, parameters, information_handler):
         """
         Handles all url:s that are intended for the sp.
-        :param environ: WSGI enviroment.
-        :param start_response: WSGI start response.
-        :return: The response created by underlying methods. For example;
-                 Redirect to a discovery server.
-                 Redirect to a SAML Idp.
-                 URL to the authorization endpoint.
-                 400 bad request.
+
+        Can sign in a verified user and verify a new user.
+
+        :param environ:             WSGI enviroment.
+        :param start_response:      WSGI start response.
+        :param path:                Requested path.
+        :param session              Session object.
+        :param parameters           Parameter dictionary from the request.
+        :param information_handler  The handler class for the CMS application.
+
+        :return: The response from the methods handle_idpverify and signin_idp in the InformationHandler.py class.
         """
         if path == "metadata":
             start_response('200 OK', [('Content-Type', "text/xml")])

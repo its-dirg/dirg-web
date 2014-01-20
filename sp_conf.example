@@ -55,6 +55,7 @@ ASCREDIRECT = 'acsredirect'
 #For the cookies to work do not use subfolders.
 ASCPOST = 'acspost'
 
+#Endpoint for the response from the discovery server. Do not change!
 DISCOENDPOINT = "disco"
 
 #Regual expression to match a post from Idp to SP.
