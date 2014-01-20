@@ -58,15 +58,15 @@ AUTHENTICATION_LIST = [
 SQLITE_DB = os.path.dirname(os.path.abspath(__file__)) + "/sqlite.db"
 
 EMAIL_CONFIG = {
-    "base_url": ISSUER,
-    "server": "",
-    "from": "",
-    "secure": True,
-    "user_password": False,
-    "username": "",
-    "password": "",
-    "from_name": "",
-    "subject": "",
-    "message_start": "",
-    "message_end": ""
+    "base_url": "http://localhost", #The application base url.
+    "server": "smtp.test.com",        #Smtp server
+    "from": "noreplay@test.com",    #From e-mail
+    "secure": True,                 #True/False. If the TLS/SSL is used by the server.
+    "user_password": False,         #True/False. If smtp server demands authentication.
+    "username": "",                 #Username
+    "password": "",                 #Password
+    "from_name": "Test Tester",     #Name of the e-mail sender.
+    "subject": "My subject",        #Subject for the e-mail.
+    "message_start": "Hi!\n\nPlease click on the link below to activate your account.",
+    "message_end": "Regards,\n\nThe support!"
 }

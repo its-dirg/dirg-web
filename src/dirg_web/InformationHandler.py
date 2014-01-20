@@ -11,6 +11,11 @@ __author__ = 'haho0032'
 
 
 class Information(object):
+    """
+    This class handles all requests connected to the content, aka information, in the application.
+    That includes authority and authentication for the information.
+    """
+
     def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods, sqlite_db,
                  email_config, sphandler, base):
         """
@@ -19,6 +24,31 @@ class Information(object):
         :param start_response: WSGI start_respose
         :param session:        Beaker session
         :param logger:         Class to perform logging.
+        :param parameters:     Request parameters (POST or GET)
+        :param lookup:               Lookup for mako templetes.
+        :param cache:                A cache that lives as long as the application is shared between all users. (Dictionary)
+        :param auth_methods:         A list of authentication methods. Example:
+                               AUTHENTICATION_LIST = [
+                                    {"type": SecureSession.USERPASSWORD, "name": "Authenticate with username/password"},
+                                    {"type": SecureSession.SP, "name": "Authenticate with SAML"},
+                               ]
+        :param sqlite_db:            A full path to a sqlite database.
+        :param email_config:         Configuration for a e-mail client. Example:
+                                EMAIL_CONFIG = {
+                                    "base_url": "http://localhost", #The application base url.
+                                    "server": "smtp.test.com",        #Smtp server
+                                    "from": "noreplay@test.com",    #From e-mail
+                                    "secure": True,                 #True/False. If the TLS/SSL is used by the server.
+                                    "user_password": False,         #True/False. If smtp server demands authentication.
+                                    "username": "",                 #Username
+                                    "password": "",                 #Password
+                                    "from_name": "Test Tester",     #Name of the e-mail sender.
+                                    "subject": "My subject",        #Subject for the e-mail.
+                                    "message_start": "Hi!\n\nPlease click on the link below to activate your account.",
+                                    "message_end": "Regards,\n\nThe support!"
+                                }
+        :param sphandler:       The class that acts as SAML client. /src/sp/handler.py.
+        :base:                  Base url (context path) for the web application.
         """
         self.environ = environ
         self.start_response = start_response
@@ -32,19 +62,38 @@ class Information(object):
         self.email_config = email_config
         self.base = base
         self.sphandler = sphandler
+
+        #The path the user will perform validation of an e-mail adress.
         self.verify_path = "/verify"
+
+        #A requested parameter name for a tag in DirgWebDb database.
         self.param_tag = "tag"
+        #A requested parameter name for a type in DirgWebDb database.
         self.param_type = "type"
+
+        #Authentication method password.
         self.type_password = "pass"
+        #Authentication method SAML IdP.
         self.type_idp = "idp"
+        #Authentication method password. Only used for inviting a new user.
         self.type_password_new = "pass_new"
+        #Authentication method SAML IdP.  Only used for inviting a new user.
         self.type_idp_new = "idp_new"
+
+        #Folder for backing up content.
         self.backup_path = "backup/"
+        #Folder for html content.
         self.information_path = "information/"
+        #File ending for backing upp html content.
         self.file_ending = ".html"
+        #The name and path to the menu file.
         self.menu_file = "menu/menu.json"
+        #Name and path to the custom CSS style sheet that can be configured in the application.
         self.custom_css_file = "static/custom.css"
+        #Cache key for all the banned users in the application.
         self.banned_users = "banned_users"
+
+        #Contains all requested path this application will handle.
         self.urls = [
             "",
             "save",
@@ -66,10 +115,17 @@ class Information(object):
             "information_init_app_js"
         ]
 
+        #Init of the banned users space in the cache.
+        #Banned users are all users that during a session is removed or banned.
         if self.banned_users not in self.cache:
             self.cache[self.banned_users] = {}
 
     def verify(self, path):
+        """
+        Verifies if a this class should handle the request.
+        :param path: Requested path.
+        :return: True if the class should handle the request, otherwise false.
+        """
         for url in self.urls:
             if path == url:
                 return True
@@ -78,6 +134,11 @@ class Information(object):
         return False
 
     def handle(self, path):
+        """
+        Handles a request from the user.
+        :param path: Requested path.
+        :return: A WSGI response.
+        """
         if self.session.email() is not None and self.session.email() in self.cache[self.banned_users]:
             self.handle_signout()
         if path == "information":
@@ -122,6 +183,10 @@ class Information(object):
             return self.handle_index()
 
     def handle_index(self):
+        """
+        Handles request to the index page and returns index.mako.
+        :return: The index page as a WSGI response.
+        """
         resp = Response(mako_template="index.mako",
                         template_lookup=self.lookup,
                         headers=[("Content-Security-Policy", "")])
@@ -132,6 +197,11 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def handle_information_init_app_js(self):
+        """
+        Handles requests for the angular initiation javascript file.
+        This file is created with mako to insert the correct context(base) path.
+        :return A .js file as WSGI response.
+        """
         resp = Response(mako_template="information_init_app_js.mako",
                         template_lookup=self.lookup,
                         headers=[])
@@ -141,11 +211,22 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def dirg_web_db(self):
+        """
+        Initiates the DirgWebDb object, aka database for for the users in DIRG web.
+        :return An instance of the class DirgWebDb.
+        """
         db = DirgWebDb(self.sqlite_db, self.verify_path, self.param_tag, self.param_type, self.type_password,
                        self.type_idp)
         return db
 
     def signin_idp(self, uid):
+        """
+        When a user has signed in with the SAML SP client /src/sp/handler.py, it calls this method.
+        Verifies if the saml user is registered in the application and will setup the session correct.
+        :param uid: An unqiue identifier for the user.
+        :return: A WSGI response. If successfull the user will be redirected to the start page, otherwise
+                 will the user get an error page.
+        """
         db = self.dirg_web_db()
         try:
             success, email = db.validate_uid(None, uid)
@@ -171,6 +252,14 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def handle_idpverify(self, email, tag, uid):
+        """
+        When a user has verified the registered e-mail by login in to an SAML IdP, the user will
+        be redirected to this method to finalize the regisration.
+        :param email: The users e-mail.
+        :param tag:   The unquie tag sent to the users e-mail adress.
+        :param uid:   The unquie user identification returned from the SAML IdP.
+        :return: A WSGI response to verify.mako.
+        """
         try:
             db = self.dirg_web_db()
             if email is None:
@@ -207,6 +296,23 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def change_password(self, tag_verification=False):
+        """
+        This method is used to change the users password.
+        Requires that the paramaters email, password, password1 and password2 are sent as a request parameters.
+        This method can be used to change password when the user is logged in to the application or during
+        the verification phase.
+
+        self.parameters["email"]:       The users e-mail.
+        self.parameters["password"]:    The currenct password for the user.
+        self.parameters["password1"]:   The new password for the user.
+        self.parameters["password2"]:   The new password for the user.
+
+        :param tag_verification: Tag sent to the users e-mail during the e-mail verification process.
+        :return: A tuple (success, errormessage, type)
+                    success: True if the password was changed.
+                    errormessage: Empty if success = True otherwise a message describing the error.
+                    type: Nothing or "pass" if the tag was correctly verified.
+        """
         success = False
         errormessage = ""
         tag = ""
@@ -260,6 +366,19 @@ class Information(object):
         return success, errormessage, _type
 
     def handle_verifypass(self):
+        """
+        Will verify the e-mail for a user that are going to user username/password as authentication.
+
+        All request parameters are in self.parameters.
+
+        Expects:
+        self.parameters["tag"]:         The unquie tag sent to the users e-mail adress.
+        self.parameters["email"]:       The users e-mail.
+        self.parameters["password"]:    The currenct password for the user.
+        self.parameters["password1"]:   The new password for the user.
+        self.parameters["password2"]:   The new password for the user.
+        :return: A WSGI response to the page verify.mako.
+        """
         message = ""
         tag = ""
         if "tag" in self.parameters:
@@ -282,6 +401,16 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def handle_verify(self):
+        """
+        Will verify the e-mail for an invited user.
+
+        All request parameters are in self.parameters.
+
+        Expects:
+        self.parameters["tag"]:         The unquie tag sent to the users e-mail adress.
+        :return: A WSGI response to verify.mako if the user will verify with username/password or a redirect
+                 to a SAML IdP if the user will have to verify his identity with an IdP.
+        """
         message = ""
         tag = ""
         if "tag" not in self.parameters:
@@ -314,6 +443,23 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def handle_invite(self):
+        """
+        Will a new user to the application and send a verification e-mail
+
+        All request parameters are in self.parameters.
+
+        Expects:
+        self.parameters["email"]: The users e-mail, that will have to be verified.
+        self.parameters["type"]: A string with values;
+                                    pass        =   Invite existing user to sign in with username/password.
+                                    idp         =   Invite existing user to sign in with SAML IdP.
+                                    pass_new    =   Invite new user to sign in with username/password.
+                                    idp_new     =   Invite new user to sign in with SAML IdP.
+        self.parameters["forename"]: The users first name.
+        self.parameters["surname"]:  The users last name.
+        :return: A WSGI json response {text}. Will contain a text message if no errors occured.
+                 If an error occure see service_error.
+        """
         try:
             if not self.session.is_allowed_to_invite(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
@@ -388,6 +534,30 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True)
 
     def handle_save(self):
+        """
+        Will save the content for a CMS controlled web page.
+
+        A web page get its unquie identification from the menu (/menu/menu.json).
+
+        Each web page have a page identification called submit in menu.json.
+        A web page can be a parent or child, there is no point to keep track of the relations.
+
+        A web page can also contain a submenu. In that case each web page in the submenu must be connected to the
+        page identification.
+
+        Each submenu can contain several headers and the identifications within a submenu is never uqniqe.
+        The combination of page, submenu header and submenu page must be unquie.
+
+        All request parameters are in self.parameters.
+
+        Expects:
+        self.parameters["page"]:            The page (that can contain a submenu).
+        self.parameters["html"]:            The html to be saved.
+        self.parameters["submenu_header"]:  The unquie identifier for the submenu header. May be empty.
+        self.parameters["submenu_page"]:    The unquie identifier for the submenu page. May be empyu.
+        :return: A WSGI json response {text}. The text will contain the saved HTML-file.
+                 If an error occure see service_error.
+        """
         if not self.session.is_allowed_to_edit_page(self.cache[self.banned_users]):
             return self.service_error("You are not authorized!")
         try:
@@ -440,6 +610,18 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True)
 
     def handle_signin(self):
+        """
+        Handles username/password authtentication.
+
+        All request parameters are in self.parameters.
+
+        Expects:
+        self.parameters["email"]:       The users e-mail.
+        self.parameters["password"]:    Password for the given e-mail.
+        :return: A WSGI json response. If an error occure see service_error.
+
+        :return: A WSGI json response (see the method handle_auth). If an error occure see service_error.
+        """
         try:
             if "user" in self.parameters and "password" in self.parameters:
                 success = self.session.sign_in(self.parameters["user"], SecureSession.USERPASSWORD,
@@ -462,6 +644,12 @@ class Information(object):
             return self.service_error("The application is not working, please contact an administrator.", ex, True)
 
     def handle_signout(self):
+        """
+        Will log out the user from the application.
+
+        The user WILL NOT be logged out from any SAML IdP's.
+        :return: A WSGI json response (see the method handle_auth). If an error occure see service_error.
+        """
         try:
             self.session.sign_out()
             return self.return_json(json.dumps(self.session.user_authentication(self.cache[self.banned_users])))
@@ -469,6 +657,30 @@ class Information(object):
             return self.service_error("The application is not working, please contact an administrator.", ex, True)
 
     def handle_auth(self):
+        """
+        Will return the authorization in the application for the user in the session.
+
+        This is not a security layer, it is only used for layout purpose.
+
+        :return: A WSGI json response. If an error occure see service_error.
+            Example:
+            '{"authenticated": "true",
+            "allowSignout": "true",
+            "allowUserChange": "true",
+            "allowedEdit": "true",
+            "allowConfig": "false",
+            "allowInvite": "true",
+            "allowChangePassword": "true"}'
+
+            Description:
+            authenticated:       True if the user is authenticated.
+            allowSignout:        True if the user can sign out from the application.
+            allowUserChange:     True if the user is allowed to administrate users.
+            allowedEdit:         True if the user is allowed to edit pages.
+            allowConfig:         True if the user is allowed to configure menu and css files.
+            allowInvite:         True if the user is allowed to invite other users.
+            allowChangePassword: True if the user is allowed to change the password.
+        """
         try:
             auth = self.session.user_authentication(self.cache[self.banned_users])
             auth["authMethods"] = self.auth_methods
@@ -477,10 +689,22 @@ class Information(object):
             return self.service_error("The application is not working, please contact an administrator.", ex, True)
 
     def read_menu_into_cache(self, file_):
+        """
+        Will read the menu file(See /menu/menu_example.json) into the cache.
+
+        :param file_ The path to the menu file. (See /menu/menu_example.json)
+        :return: Nothing, the effect is that the menu is no in the cache.
+        """
         text = open(file_).read()
         self.cache["menu"] = json.loads(text)
 
     def handle_menu(self, file_):
+        """
+        Will filter the menu for the current user, so only allowed menus will be showed for the user.
+        :param file_ The path to the menu file. (See /menu/menu_example.json)
+        :return A python object representation of the menu (See /menu/menu_example.json). The menu will be filtered.
+                For example a user that is not authenticated will only see pages with the type: public.
+        """
         try:
             self.read_menu_into_cache(file_)
             return self.return_json(json.dumps(self.filter_menu(copy.deepcopy(self.cache["menu"]))))
@@ -489,6 +713,12 @@ class Information(object):
 
     @staticmethod
     def find_page(page, menu):
+        """
+        Searches for a specific page in a menu and returns true if it exists.
+        :param page: The submit identification for a page. (See /menu/menu_example.json)
+        :param menu: A python object representation of the json menu. (See /menu/menu_example.json)
+        :return True if the page exists in the menu, otherwise false.
+        """
         if page == "":
             return False
         for element in menu:
@@ -508,6 +738,14 @@ class Information(object):
         return menu
 
     def filter_menu_list(self, menu):
+        """
+        Will filter a menu for a specific user.
+
+        For example a user that is not authenticated will only see pages with the type: public.
+
+        :param menu:  A python object representation of the json menu. (See /menu/menu_example.json)
+        return The filtered menu.
+        """
         tmp_menu = []
         if menu is not None:
             for tmp_element in menu:
@@ -524,6 +762,14 @@ class Information(object):
         return tmp_menu
 
     def filter_submenu_list(self, element):
+        """
+        Will filter a submenu for a specific user.
+
+        For example a user that is not authenticated will only see submenu pages with the type: public.
+
+        :param element:  Is an element in the menu that can hold a submenu.
+        :return The element with a filtered submenu.
+        """
         submenu_items = []
         for tmp_submenu_item in element["submenu"]:
             list_items = []
@@ -537,7 +783,15 @@ class Information(object):
         return element
 
     def validate_page(self, page):
+        """
+        Verifies if a user may view/save a given page.
+
+        param: page The page to verify. Contains the value in submit in the menu json file.(See /menu/menu_example.json)
+
+        :return True if user may see the page, otherwise false.
+        """
         menu = self.get_menu()
+
         if menu is not None:
             page_ok = False
             if "left" in menu:
@@ -550,12 +804,28 @@ class Information(object):
         return False
 
     def get_menu(self):
+        """
+        Returns a user filtered menu.
+
+        For example a user that is not authenticated will only see pages with the type: public.
+
+        return The filtered menu. A python object representation of the json menu. (See /menu/menu_example.json)
+        """
         if "menu" not in self.cache or self.cache["menu"] is None:
             self.read_menu_into_cache(self.menu_file)
         menu = copy.deepcopy(self.cache["menu"])
         return self.filter_menu(menu)
 
     def get_submenu(self, page):
+        """
+        Retrieves the submenu for a page.
+
+        :param page: The page that contains
+                     Contains the value in submit in the menu json file.(See /menu/menu_example.json)
+
+        :return None if the page do not have a submenu, otherwise a python object representation of the json submenu.
+               (See /menu/menu_example.json)
+        """
         menu = self.get_menu()
         submenu = None
         if menu is not None:
@@ -565,6 +835,12 @@ class Information(object):
         return submenu
 
     def find_submenu(self, page, menu):
+        """
+        Will search for a submenu in a page.
+
+        return None if the page do not have a submenu, otherwise a python object representation of the json submenu.
+               (See /menu/menu_example.json)
+        """
         for element in menu:
             if element["submit"] == page:
                 if len(element["submenu"]) > 0:
@@ -575,6 +851,17 @@ class Information(object):
         return None
 
     def validate_submenu(self, submenu, header, page):
+        """
+        Verifies if a user may view/save a given submenu page.
+
+        (See /menu/menu_example.json)
+
+        param: submenu The submenu page to verify. Contains the value in submit in the submenu list.
+        param: header The header for the submenu page. to verify. Contains the value in submit for the submenu.
+        param: page The page to verify. Contains the value in submit for a parent or child.
+
+        :return True if user may see the submenu page, otherwise false.
+        """
         for tmp_submenu_item in submenu:
             if tmp_submenu_item["submit"] == header:
                 for tmp_list_item in tmp_submenu_item["list"]:
@@ -583,7 +870,30 @@ class Information(object):
         return False
 
     def get_information(self, page):
+        """
+        Retrives the HTML content for a CMS page.
 
+        The following request parameters must be in self.parameters.
+
+        Expects:
+        self.parameters["submenu_header"]: If the page is in a submenu, then it contains the value in submit for the
+                                           submenu. (See /menu/menu_example.json) May be empty.
+        self.parameters["submenu_page"]:   If the page is in a submenu, then it contains the value in submit for the
+                                           submenu list. (See /menu/menu_example.json) May be empty.
+
+
+        param: page:                       The page to get html for. Contains the value in submit for a parent or child.
+                                           (See /menu/menu_example.json)
+
+        :return A tubple (exists, text, page, submenu_header, submenu_page)
+
+        exists:         True if the page exists.
+        text:           The HTML text.
+        page:           See above.
+        submenu_header: See above.
+        submenu_page:   See above.
+
+        """
         submenu_header = ""
         submenu_page = ""
         submenu_header_file = ""
@@ -631,7 +941,18 @@ class Information(object):
         return True, text, page, submenu_header, submenu_page
 
     def handle_viewpage(self, path):
+        """
+        Makes it possible to view a specific page in the menu file. (See /menu/menu_example.json)
 
+        Will save page, submenu_header and submenu_page in the session. When the index page is viewed it know
+        what page to show.
+
+        :param path: A path /page/{page}/{submenu_header}/{submenu_page} where {page} is a the submit value for a
+                     child/parent in  the menu, {submenu_header} is the submit value for a submenu and
+                     {submenu_page} is the submit value for list in a submenu. (See /menu/menu_example.json)
+
+        return See method handle_index.
+        """
         parameters = path.split("/")
         if len(parameters) == 2:
             page = parameters[1]
@@ -651,6 +972,24 @@ class Information(object):
         return self.handle_index()
 
     def handle_information(self, page):
+        """
+        Will return the information for a page child/parent/submenu.
+
+        The following request parameters must be in self.parameters.
+
+       Expects:
+        self.parameters["submenu_header"]: If the page is in a submenu, then it contains the value in submit for the
+                                           submenu. (See /menu/menu_example.json) May be empty.
+        self.parameters["submenu_page"]:   If the page is in a submenu, then it contains the value in submit for the
+                                           submenu list. (See /menu/menu_example.json) May be empty.
+
+        param: page:                       The page to get html for. Contains the value in submit for a parent or child.
+                                           (See /menu/menu_example.json)
+
+
+        :return A WSGI json response {text}, where text is the html file. If an error occure see service_error.
+
+        """
         page_ok, text, page, submenu_header, submenu_page = self.get_information(page)
         if not page_ok:
             return self.service_error("Invalid request!")
@@ -660,6 +999,20 @@ class Information(object):
         return self.return_json(json.dumps(data))
 
     def handle_file(self):
+        """
+        This method verifies if the user may change the menu file and the custom css file.
+
+        If the user may change them the content of the requested file will be returned.
+
+        The following request parameters must be in self.parameters.
+
+       Expects:
+       self.parameters["name"]: Must be css for the custom css file and menu for the json menu.
+
+       :return A WSGI text response, where text is the content of the file. The content is not wrapped in a json
+               object.
+               If an error occure see service_error.
+        """
         try:
             if not self.session.is_allowed_to_change_file(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
@@ -688,6 +1041,20 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True, False)
 
     def handle_savefile(self):
+        """
+        This method verifies if the user may save the menu file and the custom css file.
+
+        Will save the given file, with the given content and then refresh the page for the user.
+
+        The following request parameters must be in self.parameters.
+
+       Expects:
+       self.parameters["name"]:     Must be css for the custom css file and menu for the json menu.
+       self.parameters["filetext"]: The content of the file.
+
+       :return  A redirect to the index page.
+                If an error occure see html_error.
+        """
         try:
             if not self.session.is_allowed_to_change_file(self.cache[self.banned_users]):
                 return self.html_error("You are not authorized!")
@@ -730,14 +1097,40 @@ class Information(object):
             return self.html_error("Invalid request!", ex, True)
 
     def return_text(self, text):
+        """
+        Returns the given text as conten type text/plain.
+
+        :param text: A string.
+
+        :return WSGI plain text response.
+        """
         resp = Response(text, headers=[('Content-Type', "text/plain")])
         return resp(self.environ, self.start_response)
 
     def return_json(self, text):
+        """
+        Returns the given text as a content type application/json.
+
+        :param: text: A json string.
+
+        :return WSGI json response.
+        """
         resp = Response(text, headers=[('Content-Type', "application/json")])
         return resp(self.environ, self.start_response)
 
     def service_error(self, message, exception=None, error=False, json_message=True):
+        """
+        Will return an error message as content type application/json or text/plain.
+
+        Will log the error.
+
+        :param message:     The message to be sent to the client.
+        :param exception:   The exception that genererated the error, if it exists.
+        :param error:       True if this is considered to be an error, otherwise false (warning).
+        :json_message:      True if it should be return as json, otherwise false (plain text).
+
+        return: WSGI json message {"ExceptionMessage": message} or a plain text message text.
+        """
         if exception is not None:
             self.logger.error("Exception: ", exception)
         error_message = "Service error message: " + message
@@ -755,6 +1148,17 @@ class Information(object):
         return resp(self.environ, self.start_response)
 
     def html_error(self, message, exception=None, error=False):
+        """
+        Will return an error message as an html file.
+
+        Will log the error.
+
+        :param message:     The message to be sent to the client.
+        :param exception:   The exception that genererated the error, if it exists.
+        :param error:       True if this is considered to be an error, otherwise false (warning).
+
+        return: WSGI response for the mako file html_error.mako.
+        """
         if exception is not None:
             self.logger.error("Exception: ", exception)
         error_message = "Service error message: " + message
@@ -771,6 +1175,19 @@ class Information(object):
         return resp(self.environ, self.start_response, **argv)
 
     def change_user_valid(self):
+        """
+        Will change the "valid" status for a user. If a user is considered to be unvalid, the user is banned from
+        the application.
+
+        The following request parameters must be in self.parameters.
+
+        Expects:
+        self.parameters["email"]: The e-mail for the user.
+        self.parameters["valid"]: 1 if the user is valid and 0 if the user is invalid.
+
+        :return: A WSGI json response {text}. The text will contain a sucessfull message to the client.
+                 If an error occure see service_error.
+        """
         try:
             if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
@@ -797,6 +1214,17 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True)
 
     def delete_user(self):
+        """
+        Will permently remove a user from the application.
+
+        The following request parameters must be in self.parameters.
+
+        Expects:
+        self.parameters["email"]: The e-mail for the user to be removed.
+
+        :return: A WSGI json response {text}. The text will contain a sucessfull message to the client.
+                 If an error occure see service_error.
+        """
         try:
             if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
@@ -814,6 +1242,19 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True)
 
     def change_user_admin(self):
+        """
+        Will change the "admin" status for a user. If a user is considered to be admin, the user may administrate
+        the application.
+
+        The following request parameters must be in self.parameters.
+
+        Expects:
+        self.parameters["email"]: The e-mail for the user.
+        self.parameters["admin"]: 1 if the user is admin, otherwise 0.
+
+        :return: A WSGI json response {text}. The text will contain a sucessfull message to the client.
+                 If an error occure see service_error.
+        """
         try:
             if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
@@ -837,16 +1278,58 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True)
 
     def handle_admin_users(self):
+        """
+        Will list all user that can be administrated.
+
+
+        :return A WSGI json response. If an error occure see service_error.
+
+        Example response:
+        [
+            {
+                "surname": "Last name",
+                "admin": 1,                     #1 = administrator, otherwise 0.
+                "verify": 0,                    #1 = e-mail is verified, otherwise 0.
+                "email": "test.test@test.com",
+                "valid": 1,                     #1 = valid user and 0 = banned user.
+                "forename": "First name",
+            },
+        ]
+        """
         try:
             if not self.session.is_allowed_to_change_user(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
             db = self.dirg_web_db()
             users = db.list_all_users()
-            return self.return_json(json.dumps(users))
+            tmp_users = []
+            for user in users:
+                tmp_user = {}
+                tmp_user["surname"] = user["surname"]
+                tmp_user["admin"] = user["admin"]
+                tmp_user["verify"] = user["verify"]
+                tmp_user["email"] = user["email"]
+                tmp_user["valid"] = user["valid"]
+                tmp_user["forename"] = user["forename"]
+                tmp_users.append(tmp_user)
+
+            return self.return_json(json.dumps(tmp_users))
         except Exception as ex:
             return self.service_error("Invalid request!", ex, True)
 
     def change_passwd(self):
+        """
+        Makes it possible for a user to change the password.
+
+        Requires that the paramaters email, password, password1 and password2 are sent as request parameters.
+
+        self.parameters["email"]:       The users e-mail.
+        self.parameters["password"]:    The currenct password for the user.
+        self.parameters["password1"]:   The new password for the user.
+        self.parameters["password2"]:   The new password for the user.
+
+        :return A WSGI json response {text}, where text is successfull message to the client.
+                If an error occure see service_error.
+        """
         try:
             if not self.session.is_allowed_to_change_password(self.cache[self.banned_users]):
                 return self.service_error("You are not authorized!")
