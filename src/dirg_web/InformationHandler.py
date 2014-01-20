@@ -554,7 +554,7 @@ class Information(object):
         self.parameters["page"]:            The page (that can contain a submenu).
         self.parameters["html"]:            The html to be saved.
         self.parameters["submenu_header"]:  The unquie identifier for the submenu header. May be empty.
-        self.parameters["submenu_page"]:    The unquie identifier for the submenu page. May be empyu.
+        self.parameters["submenu_page"]:    The unquie identifier for the submenu page. May be empty.
         :return: A WSGI json response {text}. The text will contain the saved HTML-file.
                  If an error occure see service_error.
         """
