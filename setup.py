@@ -13,6 +13,6 @@ setup(
     classifiers = ["Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Topic :: Software Development :: Libraries :: Python Modules"],
-    install_requires = ["cherrypy", "mako", "beaker", "validate_email", "pyDNS", 'Crypto'],
+    install_requires = ["cherrypy", "mako", "beaker", "validate_email", "pyDNS", 'Crypto', "pysaml2", "dirg-util"],
     zip_safe=False,
 )
