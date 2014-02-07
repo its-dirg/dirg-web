@@ -40,6 +40,7 @@
             "submit": "",
             "type": "public",
             "class": "dropdown",
+            "submenu": [],
             "children": [
                 {
                     "name": "Project 1",
