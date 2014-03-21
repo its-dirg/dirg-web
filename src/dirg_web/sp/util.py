@@ -189,12 +189,18 @@ class SSO(object):
                 entity_id=entity_id)
             self.logger.debug("binding: %s, destination: %s" % (_binding,
                                                                 destination))
-            req = _cli.create_authn_request(destination, vorg=vorg_name)
+            if _cli.authn_requests_signed:
+                req_id, req = _cli.create_authn_request(destination, vorg=vorg_name,
+                                                            sign=_cli.authn_requests_signed)
+            else:
+                req_id, req = _cli.create_authn_request(destination, vorg=vorg_name, sign=False)
+                msg_str = "%s" % req
+
             _rstate = rndstr()
             self.cache.relay_state[_rstate] = came_from
             ht_args = _cli.apply_binding(_binding, "%s" % req, destination,
                                          relay_state=_rstate)
-            _sid = req.id
+            _sid = req_id
             self.logger.debug("ht_args: %s" % ht_args)
         except Exception, exc:
             self.logger.exception(exc)
