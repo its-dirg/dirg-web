@@ -25,7 +25,6 @@ Please view static/test.js for more example of angular and toaster.
     ${parent.script()}
      <script type="text/javascript" src="/static/tinymce/tinymce.min.js"></script>
      <script type="text/javascript" src="/static/tinymce/jquery.tinymce.min.js"></script>
-    <script type="text/javascript" src="/static/tree.js"></script>
 
 </%block>
 
@@ -34,7 +33,6 @@ Please view static/test.js for more example of angular and toaster.
     <!-- Add more css imports here! -->
     <link rel="stylesheet" type="text/css" href="/static/dirg.css">
     <link rel="stylesheet" type="text/css" href="/static/custom.css">
-        <link rel="stylesheet" type="text/css" href="/static/tree.css">
     ${parent.script()}
 </%block>
 
@@ -48,7 +46,7 @@ Please view static/test.js for more example of angular and toaster.
 </%block>
 
 <%block name="headline">
-    <div ng-controller="InformationCtrl">
+    <div id="InformationCtrl" ng-controller="InformationCtrl">
     <img class="umulogo" src="/static/logo.png" /><span class="logotext">Distributed Identity Research Group</span>
 
     <nav class="navbar navbar-default" role="navigation">
@@ -61,13 +59,15 @@ Please view static/test.js for more example of angular and toaster.
 
 <%block name="body">
     <div editmenu></div>
-    <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true" ng-click="editPage();"></div>
-    <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true"  ng-click="savePage();"></div>
+    <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true && iframe==false" ng-click="editPage();"></div>
+    <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true && iframe==false"  ng-click="savePage();"></div>
+
+<div ng-show="iframe==true" class="iframe_div">
+    <iframe src="{{iframe_src}}"></iframe>
+</div>
 
 
-
-
-<table ng-show="edit == false" class="main">
+<table ng-show="edit == false && iframe==false" class="main">
     <tr>
     <td style="width: 1px;">
         <div class="panel-group" id="accordion" style="padding-top: 15px;" ng-show="hideSubmenu == false">

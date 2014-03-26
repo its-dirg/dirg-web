@@ -169,6 +169,10 @@
         $scope.authenticated = false;
         //The current menu for the user.
         $scope.menu = "";
+        //True if the page is a iframe.
+        $scope.iframe = false;
+        //The src for the iframe.
+        $scope.iframe_src = "";
         //Users that can be administrated.
         $scope.users = "";
         //A list with all authentication methods.
@@ -215,7 +219,17 @@
          * Handles the response from the application server when HTML content for a CMS page is retrieved.
          */
         var getInformationSuccessCallback = function (data, status, headers, config) {
-            $scope.information = data.html;
+
+            if (data.iframe_src.trim().length > 0) {
+                $scope.iframe = true;
+                $scope.iframe_src = data.iframe_src;
+                $scope.information = ' ';
+            } else {
+                $scope.iframe = false;
+                $scope.iframe_src = '';
+                $scope.information = data.html;
+            }
+
             $scope.submenu_header = data.submenu_header;
             $scope.submenu_page = data.submenu_page;
             $scope.page = data.page;
@@ -233,7 +247,7 @@
             }
             window.history.pushState({path:pageurl},'',pageurl);
             $scope.edit = false;
-            $scope.$apply();
+            //$scope.$apply();
         };
 
         /**
@@ -726,6 +740,7 @@
          * Retrieves the custom css page.
          */
         $scope.editCSS = function () {
+            $scope.iframe = false;
             informationFactory.getFile("css", getCSSFileSuccessCallback, toaster, $scope);
         };
 
@@ -733,6 +748,7 @@
          * Retrieves the menu file.
          */
         $scope.editMenu = function () {
+            $scope.iframe = false;
             informationFactory.getFile("menu", getMenuFileSuccessCallback, toaster, $scope);
         };
 

@@ -569,7 +569,7 @@ class Information(object):
                 html = self.parameters["html"]
             if page is None or html is None:
                 return self.service_error("Invalid request!")
-            page_ok = self.validate_page(page)
+            page_ok, element = self.validate_page(page)
 
             submenu_header = ""
             submenu_page = ""
@@ -722,12 +722,13 @@ class Information(object):
         if page == "":
             return False
         for element in menu:
-            if element["submit"] == page:
-                return True
-            for child in element["children"]:
-                if child["submit"] == page:
-                    return True
-        return False
+            if "submit" in element and element["submit"] == page:
+                return True, element
+            if "children" in element:
+                for child in element["children"]:
+                    if "submit" in child and child["submit"] == page:
+                        return True, child
+        return False, None
 
     def filter_menu(self, menu):
         if menu is not None:
@@ -771,15 +772,17 @@ class Information(object):
         :return The element with a filtered submenu.
         """
         submenu_items = []
-        for tmp_submenu_item in element["submenu"]:
-            list_items = []
-            for tmp_list_item in tmp_submenu_item["list"]:
-                if self.session.menu_allowed(tmp_list_item, self.cache[self.banned_users]):
-                    list_items.append(tmp_list_item)
-            if len(list_items) > 0:
-                tmp_submenu_item["list"] = list_items
-                submenu_items.append(tmp_submenu_item)
-        element["submenu"] = submenu_items
+        if "submenu" in element:
+            for tmp_submenu_item in element["submenu"]:
+                list_items = []
+                if "list" in tmp_submenu_item:
+                    for tmp_list_item in tmp_submenu_item["list"]:
+                        if self.session.menu_allowed(tmp_list_item, self.cache[self.banned_users]):
+                            list_items.append(tmp_list_item)
+                    if len(list_items) > 0:
+                        tmp_submenu_item["list"] = list_items
+                        submenu_items.append(tmp_submenu_item)
+            element["submenu"] = submenu_items
         return element
 
     def validate_page(self, page):
@@ -794,14 +797,16 @@ class Information(object):
 
         if menu is not None:
             page_ok = False
+            element = None
             if "left" in menu:
-                page_ok = self.find_page(page, menu["left"])
+                page_ok, element = self.find_page(page, menu["left"])
             if "right" in menu and page_ok is not True:
-                page_ok = self.find_page(page, menu["right"])
+                page_ok, element = self.find_page(page, menu["right"])
             if not page_ok:
                 page_ok = False
-            return page_ok
-        return False
+                element = None
+            return page_ok, element
+        return False, None
 
     def get_menu(self):
         """
@@ -842,12 +847,13 @@ class Information(object):
                (See /menu/menu_example.json)
         """
         for element in menu:
-            if element["submit"] == page:
+            if "submit" in element and element["submit"] == page:
                 if len(element["submenu"]) > 0:
                     return element["submenu"]
-            for child in element["children"]:
-                if child["submit"] == page:
-                    return child["submenu"]
+            if "children" in element:
+                for child in element["children"]:
+                    if child["submit"] == page:
+                        return child["submenu"]
         return None
 
     def validate_submenu(self, submenu, header, page):
@@ -863,10 +869,11 @@ class Information(object):
         :return True if user may see the submenu page, otherwise false.
         """
         for tmp_submenu_item in submenu:
-            if tmp_submenu_item["submit"] == header:
-                for tmp_list_item in tmp_submenu_item["list"]:
-                    if tmp_list_item["submit"] == page:
-                        return True
+            if "submit" in tmp_submenu_item and tmp_submenu_item["submit"] == header:
+                if "list" in tmp_submenu_item:
+                    for tmp_list_item in tmp_submenu_item["list"]:
+                        if "submit" in tmp_list_item and tmp_list_item["submit"] == page:
+                            return True
         return False
 
     def get_information(self, page):
@@ -898,6 +905,7 @@ class Information(object):
         submenu_page = ""
         submenu_header_file = ""
         submenu_page_file = ""
+        iframe_src = " "
 
         if self.session.is_page_set():
             page, submenu_header, submenu_page = self.session.get_page()
@@ -906,7 +914,7 @@ class Information(object):
             self.session.clear_page()
 
         text = " "
-        page_ok = self.validate_page(page)
+        page_ok, element = self.validate_page(page)
 
         submenu = self.get_submenu(page)
         if "submenu_header" in self.parameters and "submenu_page" in self.parameters:
@@ -919,26 +927,32 @@ class Information(object):
                                                 self.parameters["submenu_page"])
         else:
             if submenu is not None and len(submenu) > 0 and len(submenu[0]["list"]) > 0:
-                submenu_header = submenu[0]["submit"]
-                submenu_page = submenu[0]["list"][0]["submit"]
-                submenu_header_file = "." + submenu_header
-                submenu_page_file = "." + submenu_page
+                if "submit" in submenu[0]:
+                    submenu_header = submenu[0]["submit"]
+                    submenu_header_file = "." + submenu_header
+                if "list" in submenu[0] and "submit" in submenu[0]["list"][0]:
+                    submenu_page = submenu[0]["list"][0]["submit"]
+                    submenu_page_file = "." + submenu_page
 
-        if not page_ok:
-            return False, text, "", "", ""
+        if "iframe_src" in element and len(element["iframe_src"]) > 0:
+            text = " "
+            iframe_src = element["iframe_src"]
+        else:
+            if not page_ok:
+                return False, text, "", "", ""
 
-        file_ = self.information_path + page + submenu_header_file + submenu_page_file + self.file_ending
-        try:
-            fp = open(file_, 'r')
-            text = fp.read()
-            if text == "":
-                text = " "
-            fp.close()
-        except IOError:
-            fp = open(file_, 'w')
-            fp.close()
+            file_ = self.information_path + page + submenu_header_file + submenu_page_file + self.file_ending
+            try:
+                fp = open(file_, 'r')
+                text = fp.read()
+                if text == "":
+                    text = " "
+                fp.close()
+            except IOError:
+                fp = open(file_, 'w')
+                fp.close()
 
-        return True, text, page, submenu_header, submenu_page
+        return True, text, page, submenu_header, submenu_page, iframe_src
 
     def handle_viewpage(self, path):
         """
@@ -963,7 +977,7 @@ class Information(object):
         else:
             return self.html_error("No such page can be found for you!")
 
-        page_ok, text, page, submenu_header, submenu_page = self.get_information(page)
+        page_ok, text, page, submenu_header, submenu_page, iframe_src = self.get_information(page)
         if not page_ok:
             return self.html_error("No such page can be found for you!")
 
@@ -990,11 +1004,12 @@ class Information(object):
         :return A WSGI json response {text}, where text is the html file. If an error occure see service_error.
 
         """
-        page_ok, text, page, submenu_header, submenu_page = self.get_information(page)
+        page_ok, text, page, submenu_header, submenu_page, iframe_src = self.get_information(page)
         if not page_ok:
             return self.service_error("Invalid request!")
 
-        data = {"html": text, "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page}
+        data = {"html": text, "iframe_src": iframe_src,
+                "page": page, "submenu_header": submenu_header, "submenu_page": submenu_page}
 
         return self.return_json(json.dumps(data))
 
