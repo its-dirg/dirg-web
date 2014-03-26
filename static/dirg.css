@@ -10,11 +10,10 @@ body {
 }
 
 #InformationCtrl {
-    height: 70%;
+    height: 100%;
 }
 
 #formContainer {
-    height: 100%;
 }
 
 .iframe_div {

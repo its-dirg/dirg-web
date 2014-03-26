@@ -224,10 +224,12 @@
                 $scope.iframe = true;
                 $scope.iframe_src = data.iframe_src;
                 $scope.information = ' ';
+                $('#formContainer').css('height','70%');
             } else {
                 $scope.iframe = false;
                 $scope.iframe_src = '';
                 $scope.information = data.html;
+                $('#formContainer').height('');
             }
 
             $scope.submenu_header = data.submenu_header;
@@ -741,6 +743,7 @@
          */
         $scope.editCSS = function () {
             $scope.iframe = false;
+            $('#formContainer').height('');
             informationFactory.getFile("css", getCSSFileSuccessCallback, toaster, $scope);
         };
 
@@ -749,6 +752,7 @@
          */
         $scope.editMenu = function () {
             $scope.iframe = false;
+            $('#formContainer').height('');
             informationFactory.getFile("menu", getMenuFileSuccessCallback, toaster, $scope);
         };
 
