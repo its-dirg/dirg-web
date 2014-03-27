@@ -934,13 +934,13 @@ class Information(object):
                     submenu_page = submenu[0]["list"][0]["submit"]
                     submenu_page_file = "." + submenu_page
 
+        if not page_ok:
+            return False, text, "", "", "", ""
+
         if "iframe_src" in element and len(element["iframe_src"]) > 0:
             text = " "
             iframe_src = element["iframe_src"]
         else:
-            if not page_ok:
-                return False, text, "", "", ""
-
             file_ = self.information_path + page + submenu_header_file + submenu_page_file + self.file_ending
             try:
                 fp = open(file_, 'r')
