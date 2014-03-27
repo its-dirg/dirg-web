@@ -62,8 +62,10 @@ Please view static/test.js for more example of angular and toaster.
     <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true && iframe==false" ng-click="editPage();"></div>
     <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true && iframe==false"  ng-click="savePage();"></div>
 
-<div ng-show="iframe==true" class="iframe_div">
-    <iframe src="{{iframe_src}}"></iframe>
+<div ng-show="iframe==true" id="frame_div" class="iframe_div">
+    <span data-toggle="tooltip" title="Click to enter fullscreen mode." id="max_icon" class="glyphicon glyphicon-plus-sign show_icon" onclick="max_iframe()"></span>
+    <span title="Click to leave fullscreen mode." id="min_icon" class="glyphicon glyphicon-minus-sign hide_icon" onclick="min_iframe()"></span>
+    <iframe src="{{iframe_src}}" scrolling="yes" frameborder="0"></iframe>
 </div>
 
 

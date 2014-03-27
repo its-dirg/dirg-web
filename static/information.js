@@ -1,6 +1,28 @@
 /**
  * Created by haho0032 on 2013-12-02.
  */
+    $("[data-toggle='tooltip']").tooltip();
+
+    function max_iframe() {
+        var max_icon = $("#max_icon");
+        max_icon.addClass("hide_icon");
+        max_icon.removeClass("show_icon");
+        var min_icon = $("#min_icon");
+        min_icon.addClass("show_icon");
+        min_icon.removeClass("hide_icon");
+        $("#frame_div").addClass("overlay");
+    }
+
+    function min_iframe() {
+        var min_icon = $("#min_icon");
+        min_icon.addClass("hide_icon");
+        min_icon.removeClass("show_icon");
+        var max_icon = $("#max_icon");
+        max_icon.addClass("show_icon");
+        max_icon.removeClass("hide_icon");
+        $("#frame_div").removeClass("overlay");
+    }
+
     //The initiation of app is moved to the mako folder.
     //var app = angular.module('main', ['toaster']).constant("serviceBasePath", "https://localhost:4646")
 
