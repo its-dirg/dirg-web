@@ -7,7 +7,7 @@ This is a lightweight CMS that allows you to build up a menu and add your conten
 Functionality:
 -------------
 * Federated login with SAML2.
-* Login with username/password with sqlite 3 database.
+* Login with username/password with sqLite 3 database.
 * Login with username/password where users are defined in a json file.
 * Content management system.
 * Backup of CMS pages, menu and custom css.
@@ -24,9 +24,10 @@ TODO:
 ----
 * Create a small web application for administrating the menu. In the current version is the menu administrated from the application by modifying the json file.
 * Add search functionality on the page.
-* Add wiki functionallity.
+* Add wiki functionality.
 * Add Keyboard shortcuts:
 * Save document without having to leave the editor
 * Restore the lastest backup file.
 * Show sub menu when hovering over menu item. For example you should not need to press "Software" in order to see the sub menu
-* The menu items disappear when the screen gets to smal.
+* The menu items disappear when the screen gets to small.
+* The edit windows in the "edit menu" page should have smaller font inorder to get a bedder view of the page
