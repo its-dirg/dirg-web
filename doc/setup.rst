@@ -20,7 +20,7 @@ Create server configuration
     * Set PORT to the port you want to use. If HTTPS is True, this is your https port.
     * If you use HTTPS you can also start a web server that redirects all the traffic to HTTPS. To give your http server the right port set the HTTP_PORT variable.
 * If you are not using DIRG web on a local computer, update BASEURL to your IP or hostname.
-* Do not forget to configure the variable EMAIL_CONFIG.
+* Do not forget to configure the variable EMAIL_CONFIG, which is used to invite people to login with federated login.
 * All other variables should be understandable from their names and the comments.
 
 Create Service Provider configuration
@@ -35,4 +35,43 @@ PORT must be the same as in server_conf.py as well as the value of HTTPS.
 
 BASEURL must be of the same value as server_conf.py.
 
-You can leave all the other configurations as they are. If you want to know more about the CONFIG variable, please read pysaml2 documentations.
+You can leave all the other configurations as they are. If you want to know more about the CONFIG variable, please read `pysaml2 documentations <https://dirg.org.umu.se/page/pysaml2>`_.
+
+
+Login configurations
+--------------------
+* If you want to add user who can log in by username/passwords you have to edit the file [your path]/dirg-web/auth/user_pass.json
+
+
+Federated login
+---------------
+First you need to make sure that you added the necessary info in sp_conf.py.
+
+Generate the metadata for Dirg-web by using::
+
+    make_metadata.py sp_conf.py > sp.xml
+
+Don't forget to add the metadata in the IDP's configuration file.
+
+Add federated user:
+*******************
+
+In order to make it possible for a user to login to Dirg-web using federated login the user most be invited.
+
+**Note:** Server_conf.py most contain a working email configuration in order for the invite functionality to work.
+
+#. Login in to Dirg-web by using any of the users specified in the file user_pass.json
+
+#. Press Admin > Invite in the menu
+
+#. Enter the users information
+
+#. Send the invite
+
+The invited user should now get an email containing a verification link.
+
+It's possible to administrate users by pressing Admin > Administrate users
+
+In the "Administrate users" view a list containing all the users will be presented. It will be possible to give a user specific permissions, activate a users account and see whether the user has verified the account or not.
+
+**Note:** The user accounts specified in user_pass.json should only be uses to invite other users. When other users with admin privileges has been added all users listed in user_pass.json should be removed.
