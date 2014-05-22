@@ -886,6 +886,7 @@
                             textareaTag.innerHTML = scope.information;
                             element[0].appendChild(textareaTag);
                             tinymce.init({
+                                height : 300,
                                 selector: "textarea#information",
                                 plugins: [
                                     "advlist autolink link image lists charmap print preview hr anchor pagebreak spellchecker",
