@@ -1,0 +1,56 @@
+<html lang="en">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular.min.js"></script>
+    <script src="edit_menu.js"></script>
+
+    <style>
+        .levelSpace {
+            margin-left: 5em
+        }
+
+        .row {
+            font-size: 17px;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+
+<body ng-app="editMenuApp">
+
+<div ng-controller="HelloController">
+
+    <b>Right menu:</b>
+
+    <div ng-repeat="menuItem in menuDict.right">
+        {{menuItem.name}}
+        <div ng-repeat="child in menuItem.children" class="row levelSpace">
+            {{child.name}}
+            <div ng-repeat="subMenuItem in child.submenu" class="row levelSpace">
+                {{subMenuItem.name}}
+                <div ng-repeat="listItem in subMenuItem.list" class="row levelSpace">
+                    {{listItem.name}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    <b>Left menu:</b>
+
+    <div ng-repeat="menuItem in menuDict.left" class="row">
+        {{menuItem.name}}
+        <div ng-repeat="child in menuItem.children" class="row levelSpace">
+            {{child.name}}
+            <div ng-repeat="subMenuItem in child.submenu" class="row levelSpace">
+                {{subMenuItem.name}}
+                <div ng-repeat="listItem in subMenuItem.list" class="row levelSpace">
+                    {{listItem.name}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>  

@@ -775,7 +775,8 @@
         $scope.editMenu = function () {
             $scope.iframe = false;
             $('#formContainer').height('');
-            informationFactory.getFile("menu", getMenuFileSuccessCallback, toaster, $scope);
+            //informationFactory.getFile("menu", getMenuFileSuccessCallback, toaster, $scope);
+            informationFactory.getEditMenuPage(getMenuFileSuccessCallback);
         };
 
         /**
@@ -794,15 +795,18 @@
             $scope.oldAllowedEdit = $scope.allowedEdit;
             $scope.allowedEdit = false;
             $scope.hideSubmenu = true;
-            $scope.information = text +
-                '<form action="/savefile" class="form" role="form" method="post">' +
-                    '<input type="hidden" id="name" name="name" ng-model="name" value="' + name + '" >' +
-                    '<button type="submit" class="btn btn-primary">Save</button>' +
-                    '<div class="form-group">' +
-                        '<textarea id="filetext" name="filetext" rows="10" cols="100" >' + filetext + '</textarea>' +
-                    '</div>' +
-                    '<button type="submit" class="btn btn-primary">Save</button>' +
-                '</form>'
+//            $scope.information = text +
+//                '<form action="/savefile" class="form" role="form" method="post">' +
+//                    '<input type="hidden" id="name" name="name" ng-model="name" value="' + name + '" >' +
+//                    '<button type="submit" class="btn btn-primary">Save</button>' +
+//                    '<div class="form-group">' +
+//                        '<textarea id="filetext" name="filetext" rows="10" cols="100" >' + filetext + '</textarea>' +
+//                    '</div>' +
+//                    '<button type="submit" class="btn btn-primary">Save</button>' +
+//                '</form>'
+
+            //TODO Change the static height
+            $scope.information = '<iframe frameborder="0" scrolling="yes" src="/static/edit_menu.html" style="height: 350px"> </iframe>'
         };
 
         /**
