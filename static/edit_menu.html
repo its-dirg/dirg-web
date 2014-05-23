@@ -3,14 +3,43 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular.min.js"></script>
     <script src="edit_menu.js"></script>
 
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+
     <style>
         .levelSpace {
             margin-left: 5em
         }
 
         .row {
-            font-size: 17px;
+            font-size: 14px;
             background-color: #ffffff;
+            border-bottom: 1px solid;
+            border-color: #CFCFCF;
+            padding-bottom: 10px;
+            padding-top: 10px;
+        }
+
+        .row:hover {
+            background-color: #D4EDF3;
+        }
+
+        .level2 {
+            margin-left: 5em
+        }
+
+        .level3 {
+            margin-left: 10em
+        }
+
+        .level4 {
+            margin-left: 15em
+        }
+
+        .menuTable {
+            background-color: #FFFFFF;
         }
     </style>
 </head>
@@ -19,38 +48,55 @@
 
 <div ng-controller="HelloController">
 
-    <b>Right menu:</b>
+    <!--<b>Right menu:</b>-->
 
-    <div ng-repeat="menuItem in menuDict.right">
-        {{menuItem.name}}
-        <div ng-repeat="child in menuItem.children" class="row levelSpace">
-            {{child.name}}
-            <div ng-repeat="subMenuItem in child.submenu" class="row levelSpace">
-                {{subMenuItem.name}}
-                <div ng-repeat="listItem in subMenuItem.list" class="row levelSpace">
-                    {{listItem.name}}
+    <!--<div ng-repeat="menuItem in menuDict.right">-->
+    <!--{{menuItem.name}}-->
+    <!--<div ng-repeat="child in menuItem.children" class="row levelSpace">-->
+    <!--{{child.name}}-->
+    <!--<div ng-repeat="subMenuItem in child.submenu" class="row levelSpace">-->
+    <!--{{subMenuItem.name}}-->
+    <!--<div ng-repeat="listItem in subMenuItem.list" class="row levelSpace">-->
+    <!--{{listItem.name}}-->
+    <!--</div>-->
+    <!--</div>-->
+    <!--</div>-->
+    <!--</div>-->
+
+    <!--<br>-->
+
+
+    <h3>Left menu
+        <button class="btn btn-primary btn-sm" ng-click="test();">
+            Save
+        </button>
+    </h3>
+
+
+    <div class="menuTable">
+        <div ng-repeat="menuItem in flatMenuDict" class="row">
+            <div class="col-sm-5">
+                <div class="level{{menuItem.level}}">
+                    <input type="text" ng-model="menuItem.name">
                 </div>
             </div>
-        </div>
-    </div>
-
-    <br>
-
-    <b>Left menu:</b>
-
-    <div ng-repeat="menuItem in menuDict.left" class="row">
-        {{menuItem.name}}
-        <div ng-repeat="child in menuItem.children" class="row levelSpace">
-            {{child.name}}
-            <div ng-repeat="subMenuItem in child.submenu" class="row levelSpace">
-                {{subMenuItem.name}}
-                <div ng-repeat="listItem in subMenuItem.list" class="row levelSpace">
-                    {{listItem.name}}
-                </div>
+            <div class="col-sm-2">
+                {{menuItem.submit}}
             </div>
+            <div class="col-sm-3">
+                <select ng-model="menuItem.type"
+                        ng-options="v.type as v.name for v in typeDropdown.values">
+                </select>
+            </div>
+            <div class="col-sm-1">
+                <span class="glyphicon glyphicon-trash"/>
+            </div>
+            <div class="col-sm-1">
+                <span class="glyphicon glyphicon-plus"/>
+            </div>
+
         </div>
     </div>
-
 </div>
 </body>
 </html>  
