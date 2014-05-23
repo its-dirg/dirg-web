@@ -43,8 +43,42 @@ app.controller("HelloController", function ($scope, informationFactory) {
         ]
     }
 
-    $scope.test = function(){
+    $scope.test = function () {
         alert("test");
+    }
+
+    $scope.saveMenu = function () {
+        alert("Saving menu!");
+    }
+
+    $scope.addMenyItem = function (menuItem) {
+        var submitId = prompt("Enter a submit id (which is a unique identifier for every page)", "");
+
+        if (submitId != null) {
+            var newMenuItem = {
+                "name": "",
+                "submit": submitId,
+                "type": "private"
+            }
+
+//            if (menuItem.level == 1) {
+//                newMenuItem['class'] = ""
+//            } else {
+            newMenuItem['parent'] = menuItem['submit']
+            newMenuItem['level'] = menuItem['level'] + 1;
+//            }
+
+            addElemetToMenuDict(newMenuItem);
+        }
+    }
+
+    var addElemetToMenuDict = function (newMenuItem) {
+        for (var i = 0; i < $scope.flatMenuDict.length; i++) {
+            if ($scope.flatMenuDict[i].submit == newMenuItem.parent) {
+                $scope.flatMenuDict.splice(i+1, 0, newMenuItem);
+                break;
+            }
+        }
     }
 
     var getMenuFileSuccessCallback = function (data, status) {
@@ -59,20 +93,26 @@ app.controller("HelloController", function ($scope, informationFactory) {
             for (var j = 0; j < menuItem['children'].length; j++) {
                 var childItem = menuItem['children'][j];
                 childItem['level'] = 2;
+                childItem['parent'] = menuItem['submit']
                 $scope.flatMenuDict.push(childItem);
 
                 for (var k = 0; k < childItem['submenu'].length; k++) {
                     var submenuItem = childItem['submenu'][k];
                     submenuItem['level'] = 3;
+                    submenuItem['parent'] = childItem['submit']
                     $scope.flatMenuDict.push(submenuItem);
 
                     for (var l = 0; l < submenuItem['list'].length; l++) {
                         var listItem = submenuItem['list'][l];
                         listItem['level'] = 4;
+                        listItem['parent'] = submenuItem['submit']
                         $scope.flatMenuDict.push(listItem);
                     }
+                    submenuItem['list'] = []
                 }
+                childItem['submenu'] = []
             }
+            menuItem['children'] = []
         }
     };
 
