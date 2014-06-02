@@ -21,16 +21,16 @@ app.controller("HelloController", function ($scope, informationFactory) {
         "value": "",
         "values": [
             {
+                "type": "static",
+                "name": "Static"
+            },
+            {
                 "type": "collapse_close",
                 "name": "Collapse close"
             },
             {
                 "type": "collapse_open",
                 "name": "Collapse open"
-            },
-            {
-                "type": "static",
-                "name": "Static"
             }
         ]
     }
@@ -39,32 +39,30 @@ app.controller("HelloController", function ($scope, informationFactory) {
         "value": "",
         "values": [
             {
+                "type": "construct",
+                "name": "Construct"
+            },
+            {
                 "type": "public",
                 "name": "Public"
             },
             {
                 "type": "private",
                 "name": "Private"
-            },
-            {
-                "type": "construct",
-                "name": "Construct"
             }
         ]
     }
 
-    $scope.menuTypes = ["Root item", "Drop-down item", "Page header", "Page submenu"]
-
     $scope.modalWindowsInformation = {
         "menuItemRealtionDropDown": {
-            "value": "child",
+            "value": "sibling",
             "values": [
                 {
-                    "type": "child",
+                    "type": "sibling",
                     "name": "Root item"
                 },
                 {
-                    "type": "sibling",
+                    "type": "child",
                     "name": "Drop-down item"
                 },
                 {
@@ -77,7 +75,6 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 }
             ]
         },
-        "subMenu": false,
         "submitId": ""
     }
 
@@ -123,21 +120,25 @@ app.controller("HelloController", function ($scope, informationFactory) {
     var removeUnusedAttributes = function () {
         for (var i = 0; i < originalMenuDict.length; i++) {
             delete originalMenuDict[i]["level"];
+            delete originalMenuDict[i]["menuType"]
             var levelTwoMenuItems = originalMenuDict[i].children;
 
             for (var j = 0; j < levelTwoMenuItems.length; j++) {
                 delete levelTwoMenuItems[j]["level"];
                 delete levelTwoMenuItems[j]["parent"];
+                delete originalMenuDict[i]["menuType"]
                 var levelThreeMenuItems = originalMenuDict[i].children[j].submenu;
 
                 for (var k = 0; k < levelThreeMenuItems.length; k++) {
                     delete levelThreeMenuItems[k]["level"];
                     delete levelThreeMenuItems[k]["parent"];
+                    delete originalMenuDict[i]["menuType"]
                     var levelFourMenuItems = originalMenuDict[i].children[j].submenu[k].list;
 
                     for (var l = 0; l < levelFourMenuItems.length; l++) {
                         delete levelFourMenuItems[l]["level"];
                         delete levelFourMenuItems[l]["parent"];
+                        delete originalMenuDict[i]["menuType"]
                     }
                 }
             }
@@ -147,7 +148,6 @@ app.controller("HelloController", function ($scope, informationFactory) {
     var getPostMenuSuccessCallback = function (data, status) {
         console.log("getMenuFileSuccessCallback")
     }
-
 
 
     $scope.saveMenu = function () {
@@ -166,6 +166,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
     var addSecondLevelMenuToParent = function (menuItem) {
         for (var i = 0; i < originalMenuDict.length; i++) {
             if (originalMenuDict[i].submit == menuItem.parent) {
+
                 //var parentMenuItem = originalMenuDict[i];
                 var parentMenuItem = jQuery.extend(true, {}, originalMenuDict[i]);
                 parentMenuItem['children'].push(menuItem)
@@ -237,21 +238,98 @@ app.controller("HelloController", function ($scope, informationFactory) {
     $scope.selectedMenuItem;
 
     $scope.showNewMenuItemModalWindow = function (menuItem) {
+        var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
+//
+//        if (menuItem.menuType == menuItemRelationList[0]) {
+//            $scope.modalWindowsInformation = {
+//                "menuItemRealtionDropDown": {
+//                    "value": "sibling",
+//                    "values": [
+//                        {
+//                            "type": "sibling",
+//                            "name": "Root item"
+//                        },
+//                        {
+//                            "type": "child",
+//                            "name": "Drop-down item"
+//                        },
+//                        {
+//                            "type": "header",
+//                            "name": "Page header"
+//                        }
+//                    ]
+//                },
+//                "submitId": ""
+//            }
+//        }
+//        else if (menuItem.menuType == menuItemRelationList[1]) {
+//            $scope.modalWindowsInformation = {
+//                "menuItemRealtionDropDown": {
+//                    "value": "child",
+//                    "values": [
+//                        {
+//                            "type": "child",
+//                            "name": "Drop-down item"
+//                        },
+//                        {
+//                            "type": "header",
+//                            "name": "Page header"
+//                        }
+//                    ]
+//                },
+//                "submitId": ""
+//            }
+//        }
+//        else if (menuItem.menuType == menuItemRelationList[2]) {
+//            $scope.modalWindowsInformation = {
+//                "menuItemRealtionDropDown": {
+//                    "value": "header",
+//                    "values": [
+//                        {
+//                            "type": "header",
+//                            "name": "Page header"
+//                        },
+//                        {
+//                            "type": "submenu",
+//                            "name": "Page submenu"
+//                        }
+//                    ]
+//                },
+//                "submitId": ""
+//            }
+//        }
+
+
         $('#newMenuItemModalWindow').modal('show');
         $scope.selectedMenuItem = menuItem;
     }
 
+    $scope.errorMessage = ""
+
     $scope.submitNewMenuItemModalWindow = function () {
-        $('#newMenuItemModalWindow').modal('hide');
+        $scope.errorMessage = ""
         var selectedMenuItem = $scope.selectedMenuItem;
         var menuItemRelation = $scope.modalWindowsInformation.menuItemRealtionDropDown.value;
+        var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
         var submitId = $scope.modalWindowsInformation.submitId;
 
         if (submitId != null) {
+            for (var i = 0; i < $scope.flatMenuDict.length; i++) {
+                if (submitId == $scope.flatMenuDict[i].submit) {
+                    $scope.errorMessage = "The submit id you entered is not unique"
+                    return
+                }
+                else if (submitId == ""){
+                    $scope.errorMessage = "No submit id has been entered"
+                    return
+                }
+
+            }
+
             var newMenuItem = {
                 "name": "",
                 "submit": submitId,
-                "type": "private"
+                "type": ""
             }
 
             if (selectedMenuItem.level == 1 && menuItemRelation == 'sibling')
@@ -260,25 +338,26 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 newMenuItem['parent'] = selectedMenuItem['submit']
 
 
-            if (menuItemRelation == 'child' && selectedMenuItem['level'] < 4) {
-                newMenuItem['isSubMenu'] = $scope.modalWindowsInformation.subMenu;
-                newMenuItem['level'] = selectedMenuItem['level'] + 1;
-                newMenuItem['menuType'] = $scope.menuTypes[newMenuItem['level']-1]
-
-                if ($scope.modalWindowsInformation.subMenu == true){
-                    newMenuItem['menuType'] = $scope.menuTypes[2]
-                }
-                else{
-                    newMenuItem['menuType'] = $scope.menuTypes[newMenuItem['level']-1]
-                }
+            if (menuItemRelation == menuItemRelationList[0].type) {
+                newMenuItem['level'] = 1;
+                newMenuItem['menuType'] = menuItemRelationList[0]
             }
-            else {
-                newMenuItem['level'] = selectedMenuItem['level'];
-                newMenuItem['menuType'] = $scope.menuTypes[0]
+            else if (menuItemRelation == menuItemRelationList[1].type) {
+                newMenuItem['level'] = 2;
+                newMenuItem['menuType'] = menuItemRelationList[1]
+            }
+            else if (menuItemRelation == menuItemRelationList[2].type) {
+                newMenuItem['level'] = selectedMenuItem['level'] + 1;
+                newMenuItem['menuType'] = menuItemRelationList[2]
+            }
+            else if (menuItemRelation == menuItemRelationList[3].type) {
+                newMenuItem['level'] = selectedMenuItem['level'] + 1;
+                newMenuItem['menuType'] = menuItemRelationList[3]
             }
 
             var selectedMenuItemIndex = getMenuItemIndex(selectedMenuItem);
             addElemetToMenuDict(newMenuItem, selectedMenuItemIndex);
+            $('#newMenuItemModalWindow').modal('hide');
         }
     }
 
@@ -297,32 +376,33 @@ app.controller("HelloController", function ($scope, informationFactory) {
     var getMenuFileSuccessCallback = function (data, status) {
 
         $scope.menuDict = data;
+        var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
 
         for (var i = 0; i < data.left.length; i++) {
             var menuItem = data.left[i];
             menuItem['level'] = 1;
-            menuItem['menuType'] = $scope.menuTypes[0]
+            menuItem['menuType'] = menuItemRelationList[0]
             $scope.flatMenuDict.push(menuItem);
 
             for (var j = 0; j < menuItem['children'].length; j++) {
                 var childItem = menuItem['children'][j];
                 childItem['level'] = 2;
                 childItem['parent'] = menuItem['submit']
-                childItem['menuType'] = $scope.menuTypes[1]
+                childItem['menuType'] = menuItemRelationList[1]
                 $scope.flatMenuDict.push(childItem);
 
                 for (var k = 0; k < childItem['submenu'].length; k++) {
                     var submenuItem = childItem['submenu'][k];
                     submenuItem['level'] = 3;
                     submenuItem['parent'] = childItem['submit']
-                    submenuItem['menuType'] = $scope.menuTypes[2]
+                    submenuItem['menuType'] = menuItemRelationList[2]
                     $scope.flatMenuDict.push(submenuItem);
 
                     for (var l = 0; l < submenuItem['list'].length; l++) {
                         var listItem = submenuItem['list'][l];
                         listItem['level'] = 4;
                         listItem['parent'] = submenuItem['submit']
-                        listItem['menuType'] = $scope.menuTypes[3]
+                        listItem['menuType'] = menuItemRelationList[3]
                         $scope.flatMenuDict.push(listItem);
                     }
                     submenuItem['list'] = []
@@ -332,8 +412,6 @@ app.controller("HelloController", function ($scope, informationFactory) {
             menuItem['children'] = []
         }
     };
-
-    //informationFactory.getFile("menu", getMenuFileSuccessCallback);
 
     var errorCallback = function (data, status, headers, config) {
         alert(data.ExceptionMessage);
