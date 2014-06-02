@@ -112,7 +112,8 @@ class Information(object):
             "changepasswd",
             "file",
             "savefile",
-            "information_init_app_js"
+            "information_init_app_js",
+            "post_left_menu"
         ]
 
         #Init of the banned users space in the cache.
@@ -179,6 +180,8 @@ class Information(object):
             return self.handle_viewpage(path)
         if path == "information_init_app_js":
             return self.handle_information_init_app_js()
+        if path == "post_left_menu":
+            return self.handle_post_left_menu()
         else:
             return self.handle_index()
 
@@ -209,6 +212,24 @@ class Information(object):
             "base": self.base
         }
         return resp(self.environ, self.start_response, **argv)
+
+    def loadMenuDict(self):
+        fp = open("menu/menu.json", 'r')
+        text = fp.read()
+        fp.close()
+        return json.loads(text)
+
+    def handle_post_left_menu(self):
+
+        menuDict = self.loadMenuDict()
+        menuDict['left'] = self.parameters['leftMenu']
+
+        #Save menu
+        myFile = open('menu/menu.json', 'w')
+        myFile.write(json.dumps(menuDict))
+        myFile.close()
+
+        return self.return_json('{"asd": 0}')
 
     def dirg_web_db(self):
         """

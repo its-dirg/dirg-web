@@ -3,10 +3,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular.min.js"></script>
     <script src="edit_menu.js"></script>
 
+    <script src="jquery.min.1.9.1.js"></script>
+    <script src="jquery.min.latest.js"></script>
+
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-
 
     <style>
         .levelSpace {
@@ -41,6 +43,19 @@
         .menuTable {
             background-color: #FFFFFF;
         }
+
+        #newMenuItemModalWindowContent {
+            padding: 10px
+        }
+
+        .modalComponents {
+            margin: 5px;
+        }
+
+        .headline {
+            background-color: #CFCFCF;
+            font-size: 17px;
+        }
     </style>
 </head>
 
@@ -66,16 +81,43 @@
     <!--<br>-->
 
 
-    <h3>Left menu
-        <button class="btn btn-primary btn-sm" ng-click="saveMenu();">
-            Save
-        </button>
+    <h3>
+        Left menu
+        <!--<button class="btn btn-default btn-sm" ng-click="saveMenu();">-->
+        <!--<span class="glyphicon glyphicon-plus" ng-click="test()"/>-->
+        <!--</button>-->
     </h3>
 
+    <button class="btn btn-primary btn-sm" ng-click="saveMenu();">
+        Save
+    </button>
+    <br>
+    <br>
+
+
+    <div>
+        <div class="col-sm-4 headline">
+            Menu item name:
+        </div>
+        <div class="col-sm-2 headline">
+            Submit ID:
+        </div>
+        <div class="col-sm-2 headline">
+            Type
+        </div>
+        <div class="col-sm-2 headline">
+            Visibility
+        </div>
+        <div class="col-sm-2 headline">
+            .
+        </div>
+    </div>
+    <br>
+    <br>
 
     <div class="menuTable">
         <div ng-repeat="menuItem in flatMenuDict" class="row">
-            <div class="col-sm-5">
+            <div class="col-sm-4">
                 <div class="level{{menuItem.level}}">
                     <input type="text" ng-model="menuItem.name">
                 </div>
@@ -83,20 +125,67 @@
             <div class="col-sm-2">
                 {{menuItem.submit}}
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-2">
+                <i>{{menuItem.menuType}}</i>
+            </div>
+            <div class="col-sm-2">
                 <select ng-model="menuItem.type"
-                        ng-options="v.type as v.name for v in typeDropdown.values">
+                        ng-options="v.type as v.name for v in menuItemVisibility.values"
+                        ng-hide="menuItem.menuType == menuTypes[2]">
+                </select>
+
+                <select ng-model="menuItem.type"
+                        ng-options="v.type as v.name for v in headerVisibility.values"
+                        ng-show="menuItem.menuType == menuTypes[2]">
                 </select>
             </div>
             <div class="col-sm-1">
-                <span class="glyphicon glyphicon-trash"/>
+                <span class="glyphicon glyphicon-trash" ng-click="deleteMenuItem(menuItem)"/>
             </div>
             <div class="col-sm-1">
-                <span class="glyphicon glyphicon-plus" ng-click="addMenyItem(menuItem)"/>
+                <span class="glyphicon glyphicon-plus" ng-click="showNewMenuItemModalWindow(menuItem)"/>
             </div>
 
         </div>
     </div>
+
+
+    <!-- Modal window for error report-->
+    <div class="modal fade" id="newMenuItemModalWindow" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="newMenuItemModalWindowContent">
+                <form id="reportForm">
+
+                    <span class="modalComponents">New menu items relation to clicked menu item:</span>
+                    <br>
+
+                    <select ng-model="modalWindowsInformation.menuItemRealtionDropDown.value"
+                            ng-options="v.type as v.name for v in modalWindowsInformation.menuItemRealtionDropDown.values"
+                            class="modalComponents">
+                    </select>
+
+                    <div ng-show="selectedMenuItem.level == 1 && modalWindowsInformation.menuItemRealtionDropDown.value == 'child'"
+                         class="modalComponents">
+                        <input type="checkbox" ng-model="modalWindowsInformation.subMenu">Sub menu
+                    </div>
+                    <br>
+
+                    <span class="modalComponents">Enter a submit id, which has to be unique for every page except for the sub menus (level 4):</span>
+                    <br>
+
+                    <input type="text" name="submitId" ng-model="modalWindowsInformation.submitId"
+                           class="modalComponents">
+                    <br>
+
+                    <button class="btn btn-primary btn-sm modalComponents" ng-click="submitNewMenuItemModalWindow();">
+                        Create menu item
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>  

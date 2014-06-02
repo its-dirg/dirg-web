@@ -38,7 +38,7 @@
         },
         {
             "name": "Projects",
-            "submit": "",
+            "submit": "projects",
             "type": "public",
             "class": "dropdown",
             "submenu": [],

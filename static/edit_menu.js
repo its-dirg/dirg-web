@@ -4,6 +4,10 @@ app.factory('informationFactory', function ($http) {
     return {
         getFile: function (name) {
             return $http.get("/file?name=" + name);
+        },
+
+        postLeftMenu: function (leftMenu) {
+            return $http.post("/post_left_menu", {"leftMenu": leftMenu});
         }
     }
 });
@@ -13,21 +17,9 @@ app.controller("HelloController", function ($scope, informationFactory) {
     $scope.menuDict;
     $scope.flatMenuDict = [];
 
-    $scope.typeDropdown = {
+    $scope.headerVisibility = {
         "value": "",
         "values": [
-            {
-                "type": "public",
-                "name": "Public"
-            },
-            {
-                "type": "private",
-                "name": "Private"
-            },
-            {
-                "type": "construct",
-                "name": "Construct"
-            },
             {
                 "type": "collapse_close",
                 "name": "Collapse close"
@@ -43,16 +35,217 @@ app.controller("HelloController", function ($scope, informationFactory) {
         ]
     }
 
+    $scope.menuItemVisibility = {
+        "value": "",
+        "values": [
+            {
+                "type": "public",
+                "name": "Public"
+            },
+            {
+                "type": "private",
+                "name": "Private"
+            },
+            {
+                "type": "construct",
+                "name": "Construct"
+            }
+        ]
+    }
+
+    $scope.menuTypes = ["Root item", "Drop-down item", "Page header", "Page submenu"]
+
+    $scope.modalWindowsInformation = {
+        "menuItemRealtionDropDown": {
+            "value": "child",
+            "values": [
+                {
+                    "type": "child",
+                    "name": "Root item"
+                },
+                {
+                    "type": "sibling",
+                    "name": "Drop-down item"
+                },
+                {
+                    "type": "header",
+                    "name": "Page header"
+                },
+                {
+                    "type": "submenu",
+                    "name": "Page submenu"
+                }
+            ]
+        },
+        "subMenu": false,
+        "submitId": ""
+    }
+
     $scope.test = function () {
         alert("test");
     }
 
-    $scope.saveMenu = function () {
-        alert("Saving menu!");
+    var originalMenuDict = []
+
+    var convertToOriginalMenuStructure = function () {
+        for (var i = 0; i < $scope.flatMenuDict.length; i++) {
+            //var currentMenuItem = $scope.flatMenuDict[i];
+            var currentMenuItem = jQuery.extend(true, {}, $scope.flatMenuDict[i]);
+
+            if (currentMenuItem.level == 1) {
+                currentMenuItem['children'] = []
+                originalMenuDict.push(currentMenuItem)
+            }
+            else if (currentMenuItem.level == 2) {
+                addSecondLevelMenuToParent(currentMenuItem)
+            }
+            else if (currentMenuItem.level == 3) {
+                addThirdLevelMenuToParent(currentMenuItem)
+            }
+            else if (currentMenuItem.level == 4) {
+                addForthLevelMenuToParent(currentMenuItem)
+            }
+        }
+
+        console.log(originalMenuDict)
     }
 
-    $scope.addMenyItem = function (menuItem) {
-        var submitId = prompt("Enter a submit id (which is a unique identifier for every page)", "");
+    var addDropDownAttribute = function () {
+        for (var j = 0; j < $scope.flatMenuDict.length; j++) {
+            if ($scope.flatMenuDict[j].level == 1) {
+                if ($scope.flatMenuDict[j].children.length > 0) {
+                    $scope.flatMenuDict[j]['class'] = "dropdown"
+                }
+            }
+        }
+    }
+
+    var removeUnusedAttributes = function () {
+        for (var i = 0; i < originalMenuDict.length; i++) {
+            delete originalMenuDict[i]["level"];
+            var levelTwoMenuItems = originalMenuDict[i].children;
+
+            for (var j = 0; j < levelTwoMenuItems.length; j++) {
+                delete levelTwoMenuItems[j]["level"];
+                delete levelTwoMenuItems[j]["parent"];
+                var levelThreeMenuItems = originalMenuDict[i].children[j].submenu;
+
+                for (var k = 0; k < levelThreeMenuItems.length; k++) {
+                    delete levelThreeMenuItems[k]["level"];
+                    delete levelThreeMenuItems[k]["parent"];
+                    var levelFourMenuItems = originalMenuDict[i].children[j].submenu[k].list;
+
+                    for (var l = 0; l < levelFourMenuItems.length; l++) {
+                        delete levelFourMenuItems[l]["level"];
+                        delete levelFourMenuItems[l]["parent"];
+                    }
+                }
+            }
+        }
+    }
+
+    var getPostMenuSuccessCallback = function (data, status) {
+        console.log("getMenuFileSuccessCallback")
+    }
+
+
+
+    $scope.saveMenu = function () {
+
+        //Switch the menu back so that level 1 contains sub menu and so on
+        convertToOriginalMenuStructure();
+
+        //Add the dropdown attribute to the level 1 menu items it the are any children
+        addDropDownAttribute();
+
+        removeUnusedAttributes();
+
+        informationFactory.postLeftMenu(originalMenuDict).success(getPostMenuSuccessCallback).error(errorCallback);
+    }
+
+    var addSecondLevelMenuToParent = function (menuItem) {
+        for (var i = 0; i < originalMenuDict.length; i++) {
+            if (originalMenuDict[i].submit == menuItem.parent) {
+                //var parentMenuItem = originalMenuDict[i];
+                var parentMenuItem = jQuery.extend(true, {}, originalMenuDict[i]);
+                parentMenuItem['children'].push(menuItem)
+                originalMenuDict[i] = parentMenuItem;
+                break;
+            }
+        }
+    }
+
+    var addThirdLevelMenuToParent = function (menuItem) {
+        for (var i = 0; i < originalMenuDict.length; i++) {
+            for (var j = 0; j < originalMenuDict[i].children.length; j++) {
+                //thirdLevelMenuDict = originalMenuDict[i].children[j];
+                var thirdLevelMenuDict = jQuery.extend(true, {}, originalMenuDict[i].children[j]);
+                if (thirdLevelMenuDict.submit == menuItem.parent) {
+                    thirdLevelMenuDict['submenu'].push(menuItem)
+                    originalMenuDict[i].children[j] = thirdLevelMenuDict;
+                    break;
+                }
+            }
+        }
+    }
+
+    var addForthLevelMenuToParent = function (menuItem) {
+        for (var i = 0; i < originalMenuDict.length; i++) {
+            for (var j = 0; j < originalMenuDict[i].children.length; j++) {
+                for (var k = 0; k < originalMenuDict[i].children[j].submenu.length; k++) {
+                    //thirdLevelMenuDict = originalMenuDict[i].children[j].submenu[k];
+                    var thirdLevelMenuDict = jQuery.extend(true, {}, originalMenuDict[i].children[j].submenu[k]);
+
+                    if (thirdLevelMenuDict.submit == menuItem.parent) {
+                        thirdLevelMenuDict['list'].push(menuItem)
+                        originalMenuDict[i].children[j].submenu[k] = thirdLevelMenuDict;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    $scope.deleteMenuItem = function (menuItem) {
+        var childrenAndSubChildrenIndexes = getChildrenIndexs(menuItem);
+        var selectedMenuItemIndex = getMenuItemIndex(menuItem);
+
+        var shouldDeleteMenuItem = window.confirm("Do you really want to remove this item?");
+
+        if (shouldDeleteMenuItem == true)
+            deleteMenuItem(selectedMenuItemIndex, childrenAndSubChildrenIndexes);
+    }
+
+    var getChildrenIndexs = function (menuItem) {
+        var childrenIndexList = []
+        for (var index = 0; index < $scope.flatMenuDict.length; index++) {
+            if ($scope.flatMenuDict[index].level > menuItem.level) {
+                if (menuItem.submit == $scope.flatMenuDict[index].parent) {
+                    subChildrenIndexList = getChildrenIndexs($scope.flatMenuDict[index])
+                    childrenIndexList.push(index)
+                    childrenIndexList = childrenIndexList.concat(subChildrenIndexList)
+                }
+            }
+        }
+        return childrenIndexList;
+    }
+
+    var deleteMenuItem = function (selectedMenuItemIndex, childrenAndSubChildrenIndexes) {
+        $scope.flatMenuDict.splice(selectedMenuItemIndex, childrenAndSubChildrenIndexes.length + 1);
+    }
+
+    $scope.selectedMenuItem;
+
+    $scope.showNewMenuItemModalWindow = function (menuItem) {
+        $('#newMenuItemModalWindow').modal('show');
+        $scope.selectedMenuItem = menuItem;
+    }
+
+    $scope.submitNewMenuItemModalWindow = function () {
+        $('#newMenuItemModalWindow').modal('hide');
+        var selectedMenuItem = $scope.selectedMenuItem;
+        var menuItemRelation = $scope.modalWindowsInformation.menuItemRealtionDropDown.value;
+        var submitId = $scope.modalWindowsInformation.submitId;
 
         if (submitId != null) {
             var newMenuItem = {
@@ -61,24 +254,44 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 "type": "private"
             }
 
-//            if (menuItem.level == 1) {
-//                newMenuItem['class'] = ""
-//            } else {
-            newMenuItem['parent'] = menuItem['submit']
-            newMenuItem['level'] = menuItem['level'] + 1;
-//            }
+            if (selectedMenuItem.level == 1 && menuItemRelation == 'sibling')
+                newMenuItem['class'] = ""
+            else
+                newMenuItem['parent'] = selectedMenuItem['submit']
 
-            addElemetToMenuDict(newMenuItem);
+
+            if (menuItemRelation == 'child' && selectedMenuItem['level'] < 4) {
+                newMenuItem['isSubMenu'] = $scope.modalWindowsInformation.subMenu;
+                newMenuItem['level'] = selectedMenuItem['level'] + 1;
+                newMenuItem['menuType'] = $scope.menuTypes[newMenuItem['level']-1]
+
+                if ($scope.modalWindowsInformation.subMenu == true){
+                    newMenuItem['menuType'] = $scope.menuTypes[2]
+                }
+                else{
+                    newMenuItem['menuType'] = $scope.menuTypes[newMenuItem['level']-1]
+                }
+            }
+            else {
+                newMenuItem['level'] = selectedMenuItem['level'];
+                newMenuItem['menuType'] = $scope.menuTypes[0]
+            }
+
+            var selectedMenuItemIndex = getMenuItemIndex(selectedMenuItem);
+            addElemetToMenuDict(newMenuItem, selectedMenuItemIndex);
         }
     }
 
-    var addElemetToMenuDict = function (newMenuItem) {
+    var getMenuItemIndex = function (menuItem) {
         for (var i = 0; i < $scope.flatMenuDict.length; i++) {
-            if ($scope.flatMenuDict[i].submit == newMenuItem.parent) {
-                $scope.flatMenuDict.splice(i+1, 0, newMenuItem);
-                break;
+            if ($scope.flatMenuDict[i].submit == menuItem.submit) {
+                return i;
             }
         }
+    }
+
+    var addElemetToMenuDict = function (newMenuItem, index) {
+        $scope.flatMenuDict.splice(index + 1, 0, newMenuItem);
     }
 
     var getMenuFileSuccessCallback = function (data, status) {
@@ -88,24 +301,28 @@ app.controller("HelloController", function ($scope, informationFactory) {
         for (var i = 0; i < data.left.length; i++) {
             var menuItem = data.left[i];
             menuItem['level'] = 1;
+            menuItem['menuType'] = $scope.menuTypes[0]
             $scope.flatMenuDict.push(menuItem);
 
             for (var j = 0; j < menuItem['children'].length; j++) {
                 var childItem = menuItem['children'][j];
                 childItem['level'] = 2;
                 childItem['parent'] = menuItem['submit']
+                childItem['menuType'] = $scope.menuTypes[1]
                 $scope.flatMenuDict.push(childItem);
 
                 for (var k = 0; k < childItem['submenu'].length; k++) {
                     var submenuItem = childItem['submenu'][k];
                     submenuItem['level'] = 3;
                     submenuItem['parent'] = childItem['submit']
+                    submenuItem['menuType'] = $scope.menuTypes[2]
                     $scope.flatMenuDict.push(submenuItem);
 
                     for (var l = 0; l < submenuItem['list'].length; l++) {
                         var listItem = submenuItem['list'][l];
                         listItem['level'] = 4;
                         listItem['parent'] = submenuItem['submit']
+                        listItem['menuType'] = $scope.menuTypes[3]
                         $scope.flatMenuDict.push(listItem);
                     }
                     submenuItem['list'] = []
