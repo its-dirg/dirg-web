@@ -164,12 +164,19 @@ app.controller("HelloController", function ($scope, informationFactory) {
     }
 
     var addSecondLevelMenuToParent = function (menuItem) {
+        menuItemTypes = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
+
         for (var i = 0; i < originalMenuDict.length; i++) {
             if (originalMenuDict[i].submit == menuItem.parent) {
-
-                //var parentMenuItem = originalMenuDict[i];
                 var parentMenuItem = jQuery.extend(true, {}, originalMenuDict[i]);
-                parentMenuItem['children'].push(menuItem)
+
+                if (menuItem.menuType.type == menuItemTypes[1].type) {
+                    parentMenuItem['children'].push(menuItem)
+                }
+                else if (menuItem.menuType == menuItemTypes[2]) {
+                    parentMenuItem['submenu'].push(menuItem)
+                }
+
                 originalMenuDict[i] = parentMenuItem;
                 break;
             }
@@ -319,7 +326,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
                     $scope.errorMessage = "The submit id you entered is not unique"
                     return
                 }
-                else if (submitId == ""){
+                else if (submitId == "") {
                     $scope.errorMessage = "No submit id has been entered"
                     return
                 }
@@ -408,6 +415,23 @@ app.controller("HelloController", function ($scope, informationFactory) {
                     submenuItem['list'] = []
                 }
                 childItem['submenu'] = []
+            }
+
+            for (var j = 0; j < menuItem['submenu'].length; j++) {
+                var submenuItem = menuItem['submenu'][j];
+                submenuItem['level'] = 2;
+                submenuItem['parent'] = menuItem['submit']
+                submenuItem['menuType'] = menuItemRelationList[2]
+                $scope.flatMenuDict.push(submenuItem);
+
+                for (var l = 0; l < submenuItem['list'].length; l++) {
+                    var listItem = submenuItem['list'][l];
+                    listItem['level'] = 3;
+                    listItem['parent'] = submenuItem['submit']
+                    listItem['menuType'] = menuItemRelationList[3]
+                    $scope.flatMenuDict.push(listItem);
+                }
+                submenuItem['list'] = []
             }
             menuItem['children'] = []
         }
