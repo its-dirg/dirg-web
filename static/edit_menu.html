@@ -62,28 +62,12 @@
 <body ng-app="editMenuApp">
 
 <div ng-controller="HelloController">
-
-    <!--<b>Right menu:</b>-->
-
-    <!--<div ng-repeat="menuItem in menuDict.right">-->
-    <!--{{menuItem.name}}-->
-    <!--<div ng-repeat="child in menuItem.children" class="row levelSpace">-->
-    <!--{{child.name}}-->
-    <!--<div ng-repeat="subMenuItem in child.submenu" class="row levelSpace">-->
-    <!--{{subMenuItem.name}}-->
-    <!--<div ng-repeat="listItem in subMenuItem.list" class="row levelSpace">-->
-    <!--{{listItem.name}}-->
-    <!--</div>-->
-    <!--</div>-->
-    <!--</div>-->
-    <!--</div>-->
-
-    <!--<br>-->
-
-
-    <h3>
-        Left menu
-    </h3>
+    Select menu side to edit:
+    <select ng-model="menuSideDropdown.value"
+            ng-options="v.type as v.name for v in menuSideDropdown.values"
+            ng-change="setupFlatMenuDict()">
+    </select>
+    <br>
 
     <button class="btn btn-primary btn-sm" ng-click="saveMenu();">
         Save

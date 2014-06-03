@@ -6,15 +6,14 @@ app.factory('informationFactory', function ($http) {
             return $http.get("/file?name=" + name);
         },
 
-        postLeftMenu: function (leftMenu) {
-            return $http.post("/post_left_menu", {"leftMenu": leftMenu});
+        postLeftMenu: function (menu, side) {
+            return $http.post("/post_left_menu", {"menu": menu, "side": side});
         }
     }
 });
 
 app.controller("HelloController", function ($scope, informationFactory) {
 
-    $scope.menuDict;
     $scope.flatMenuDict = [];
 
     $scope.headerVisibility = {
@@ -49,6 +48,20 @@ app.controller("HelloController", function ($scope, informationFactory) {
             {
                 "type": "private",
                 "name": "Private"
+            }
+        ]
+    }
+
+    $scope.menuSideDropdown = {
+        "value": "left",
+        "values": [
+            {
+                "type": "left",
+                "name": "Left menu"
+            },
+            {
+                "type": "right",
+                "name": "Right menu"
             }
         ]
     }
@@ -109,11 +122,9 @@ app.controller("HelloController", function ($scope, informationFactory) {
     }
 
     var addDropDownAttribute = function () {
-        for (var j = 0; j < $scope.flatMenuDict.length; j++) {
-            if ($scope.flatMenuDict[j].level == 1) {
-                if ($scope.flatMenuDict[j].children.length > 0) {
-                    $scope.flatMenuDict[j]['class'] = "dropdown"
-                }
+        for (var j = 0; j < originalMenuDict.length; j++) {
+            if (originalMenuDict[j].children.length > 0) {
+                originalMenuDict[j]['class'] = "dropdown"
             }
         }
     }
@@ -130,11 +141,17 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 delete levelTwoMenuItems[j]["menuType"]
                 var levelThreeMenuItems = originalMenuDict[i].children[j].submenu;
 
+                if (levelThreeMenuItems == null)
+                    continue
+
                 for (var k = 0; k < levelThreeMenuItems.length; k++) {
                     delete levelThreeMenuItems[k]["level"];
                     delete levelThreeMenuItems[k]["parent"];
                     delete levelThreeMenuItems[k]["menuType"]
                     var levelFourMenuItems = originalMenuDict[i].children[j].submenu[k].list;
+
+                    if (levelFourMenuItems == null)
+                        continue
 
                     for (var l = 0; l < levelFourMenuItems.length; l++) {
                         delete levelFourMenuItems[l]["level"];
@@ -160,8 +177,15 @@ app.controller("HelloController", function ($scope, informationFactory) {
         }
     }
 
+    function clearAndUpdateMenuDict() {
+        $scope.flatMenuDict = [];
+        originalMenuDict = []
+        informationFactory.getFile("menu").success(getMenuFileSuccessCallback).error(errorCallback);
+    }
+
     var getPostMenuSuccessCallback = function (data, status) {
-        console.log("getMenuFileSuccessCallback")
+        alert("Menu saved successfully!");
+        clearAndUpdateMenuDict();
     }
 
 
@@ -175,7 +199,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
         removeUnusedAttributes();
 
-        informationFactory.postLeftMenu(originalMenuDict).success(getPostMenuSuccessCallback).error(errorCallback);
+        informationFactory.postLeftMenu(originalMenuDict, $scope.menuSideDropdown.value).success(getPostMenuSuccessCallback).error(errorCallback);
     }
 
     var addSecondLevelMenuToParent = function (menuItem) {
@@ -186,9 +210,11 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 var parentMenuItem = jQuery.extend(true, {}, originalMenuDict[i]);
 
                 if (menuItem.menuType.type == menuItemTypes[1].type) {
+                    menuItem['submenu'] = []
                     parentMenuItem['children'].push(menuItem)
                 }
                 else if (menuItem.menuType.type == menuItemTypes[2].type) {
+                    menuItem['list'] = []
                     parentMenuItem['submenu'].push(menuItem)
                 }
 
@@ -203,6 +229,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
             for (var j = 0; j < originalMenuDict[i].children.length; j++) {
                 var secondLevelChild = jQuery.extend(true, {}, originalMenuDict[i].children[j]);
                 if (secondLevelChild.submit == menuItem.parent) {
+                    menuItem['list'] = []
                     secondLevelChild['submenu'].push(menuItem)
                     originalMenuDict[i].children[j] = secondLevelChild;
                     break;
@@ -223,6 +250,9 @@ app.controller("HelloController", function ($scope, informationFactory) {
     var addForthLevelMenuToParent = function (menuItem) {
         for (var i = 0; i < originalMenuDict.length; i++) {
             for (var j = 0; j < originalMenuDict[i].children.length; j++) {
+                if (originalMenuDict[i].children[j].submenu == null)
+                    continue
+
                 for (var k = 0; k < originalMenuDict[i].children[j].submenu.length; k++) {
                     var thirdLevelMenuDict = jQuery.extend(true, {}, originalMenuDict[i].children[j].submenu[k]);
 
@@ -268,67 +298,6 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
     $scope.showNewMenuItemModalWindow = function (menuItem) {
         var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
-//
-//        if (menuItem.menuType == menuItemRelationList[0]) {
-//            $scope.modalWindowsInformation = {
-//                "menuItemRealtionDropDown": {
-//                    "value": "sibling",
-//                    "values": [
-//                        {
-//                            "type": "sibling",
-//                            "name": "Root item"
-//                        },
-//                        {
-//                            "type": "child",
-//                            "name": "Drop-down item"
-//                        },
-//                        {
-//                            "type": "header",
-//                            "name": "Page header"
-//                        }
-//                    ]
-//                },
-//                "submitId": ""
-//            }
-//        }
-//        else if (menuItem.menuType == menuItemRelationList[1]) {
-//            $scope.modalWindowsInformation = {
-//                "menuItemRealtionDropDown": {
-//                    "value": "child",
-//                    "values": [
-//                        {
-//                            "type": "child",
-//                            "name": "Drop-down item"
-//                        },
-//                        {
-//                            "type": "header",
-//                            "name": "Page header"
-//                        }
-//                    ]
-//                },
-//                "submitId": ""
-//            }
-//        }
-//        else if (menuItem.menuType == menuItemRelationList[2]) {
-//            $scope.modalWindowsInformation = {
-//                "menuItemRealtionDropDown": {
-//                    "value": "header",
-//                    "values": [
-//                        {
-//                            "type": "header",
-//                            "name": "Page header"
-//                        },
-//                        {
-//                            "type": "submenu",
-//                            "name": "Page submenu"
-//                        }
-//                    ]
-//                },
-//                "submitId": ""
-//            }
-//        }
-
-
         $('#newMenuItemModalWindow').modal('show');
         $scope.selectedMenuItem = menuItem;
     }
@@ -358,7 +327,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
             var newMenuItem = {
                 "name": "",
                 "submit": submitId,
-                "type": ""
+                "type": $scope.menuItemVisibility.values[0].type
             }
 
             if (selectedMenuItem.level == 1 && menuItemRelation == 'sibling')
@@ -378,6 +347,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
             else if (menuItemRelation == menuItemRelationList[2].type) {
                 newMenuItem['level'] = selectedMenuItem['level'] + 1;
                 newMenuItem['menuType'] = menuItemRelationList[2]
+                newMenuItem['type'] = $scope.headerVisibility.values[0].type
             }
             else if (menuItemRelation == menuItemRelationList[3].type) {
                 newMenuItem['level'] = selectedMenuItem['level'] + 1;
@@ -449,19 +419,32 @@ app.controller("HelloController", function ($scope, informationFactory) {
         }
     }
 
-    var getMenuFileSuccessCallback = function (data, status) {
+    function buildFlattMenuDict(menuItem, menuItemRelationList) {
+        menuItem['level'] = 1;
+        menuItem['menuType'] = menuItemRelationList[0]
+        $scope.flatMenuDict.push(menuItem);
 
-        $scope.menuDict = data;
+        addChildrenToRootMenu(menuItem, menuItemRelationList);
+        addSubmenusToRootMenu(menuItem, menuItemRelationList);
+    }
+
+    $scope.setupFlatMenuDict = function(){
+        clearAndUpdateMenuDict();
+    }
+
+    var getMenuFileSuccessCallback = function (data, status) {
         var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
 
-        for (var i = 0; i < data.left.length; i++) {
-            var menuItem = data.left[i];
-            menuItem['level'] = 1;
-            menuItem['menuType'] = menuItemRelationList[0]
-            $scope.flatMenuDict.push(menuItem);
-
-            addChildrenToRootMenu(menuItem, menuItemRelationList);
-            addSubmenusToRootMenu(menuItem, menuItemRelationList);
+        if ($scope.menuSideDropdown.value == "left") {
+            for (var i = 0; i < data.left.length; i++) {
+                var menuItem = data.left[i];
+                buildFlattMenuDict(menuItem, menuItemRelationList);
+            }
+        } else if ($scope.menuSideDropdown.value == "right") {
+            for (var i = 0; i < data.right.length; i++) {
+                var menuItem = data.right[i];
+                buildFlattMenuDict(menuItem, menuItemRelationList);
+            }
         }
     };
 

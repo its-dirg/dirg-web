@@ -222,7 +222,11 @@ class Information(object):
     def handle_post_left_menu(self):
 
         menuDict = self.loadMenuDict()
-        menuDict['left'] = self.parameters['leftMenu']
+
+        if (self.parameters['side'] == "left"):
+            menuDict['left'] = self.parameters['menu']
+        elif (self.parameters['side'] == "right"):
+            menuDict['right'] = self.parameters['menu']
 
         #Save menu
         myFile = open('menu/menu.json', 'w')

@@ -259,6 +259,7 @@
             $scope.page = data.page;
             $scope.hideSubmenu = false;
             breadcrum = "";
+            $scope.submenu = [];
             breadcrum = setupSubmenu($scope.menu.right, breadcrum);
             breadcrum = setupSubmenu($scope.menu.left, breadcrum);
             $scope.headline = breadcrum;
@@ -290,7 +291,6 @@
          * @returns The new breadcrum.
          */
         var setupSubmenu = function(menu, breadcrum) {
-            $scope.submenu = [];
             for (var i=0;i<menu.length;i++) {
                 if (menu[i].submit == $scope.page) {
                     breadcrum = menu[i].name;
