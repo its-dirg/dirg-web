@@ -368,10 +368,6 @@ app.controller("HelloController", function ($scope, informationFactory) {
     }
 
     function getSelectedSubmitId() {
-//        if ($scope.selectedMenuItem.menuType == getAllMenuReations()[0])
-//            return $scope.rootModalWindowsInformation.submitId;
-//        else if ($scope.selectedMenuItem.menuType == getAllMenuReations()[1])
-//            return $scope.dropdownModalWindowsInformation.submitId;
         return $scope.modalWindowsInformation.submitId;
     }
 
@@ -444,7 +440,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
     }
 
     var addElemetToMenuDict = function (newMenuItem, index) {
-        $scope.flatMenuDict.splice(index + 1, 0, newMenuItem);
+        $scope.flatMenuDict.splice(index, 0, newMenuItem);
     }
 
     function addChildrenToRootMenu(menuItem, menuItemRelationList) {
