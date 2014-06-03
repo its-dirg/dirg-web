@@ -91,6 +91,57 @@ app.controller("HelloController", function ($scope, informationFactory) {
         "submitId": ""
     }
 
+    $scope.rootModalWindowsInformation = {
+        "menuItemRealtionDropDown": {
+            "value": "sibling",
+            "values": [
+                {
+                    "type": "sibling",
+                    "name": "Root item"
+                },
+                {
+                    "type": "child",
+                    "name": "Drop-down item"
+                },
+                {
+                    "type": "header",
+                    "name": "Page header"
+                }
+            ]
+        },
+        "submitId": ""
+    }
+
+    $scope.dropdownModalWindowsInformation = {
+        "menuItemRealtionDropDown": {
+            "value": "child",
+            "values": [
+                {
+                    "type": "child",
+                    "name": "Drop-down item"
+                },
+                {
+                    "type": "header",
+                    "name": "Page header"
+                }
+            ]
+        },
+        "submitId": ""
+    }
+
+    $scope.headerModalWindowsInformation = {
+        "menuItemRealtionDropDown": {
+            "value": "submenu",
+            "values": [
+                {
+                    "type": "submenu",
+                    "name": "Page submenu"
+                }
+            ]
+        },
+        "submitId": ""
+    }
+
     $scope.test = function () {
         alert("test");
     }
@@ -202,8 +253,12 @@ app.controller("HelloController", function ($scope, informationFactory) {
         informationFactory.postLeftMenu(originalMenuDict, $scope.menuSideDropdown.value).success(getPostMenuSuccessCallback).error(errorCallback);
     }
 
+    function getMenuRelationsOptions(menuType) {
+        return $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
+    }
+
     var addSecondLevelMenuToParent = function (menuItem) {
-        menuItemTypes = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
+        var menuItemTypes = getMenuRelationsOptions(menuItem.menuType);
 
         for (var i = 0; i < originalMenuDict.length; i++) {
             if (originalMenuDict[i].submit == menuItem.parent) {
@@ -297,19 +352,39 @@ app.controller("HelloController", function ($scope, informationFactory) {
     $scope.selectedMenuItem;
 
     $scope.showNewMenuItemModalWindow = function (menuItem) {
-        var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
         $('#newMenuItemModalWindow').modal('show');
         $scope.selectedMenuItem = menuItem;
     }
 
     $scope.errorMessage = ""
 
+    function getSelectedMenuRelation() {
+        if ($scope.selectedMenuItem.menuType == getAllMenuReations()[0])
+            return $scope.rootModalWindowsInformation.menuItemRealtionDropDown.value;
+        else if ($scope.selectedMenuItem.menuType == getAllMenuReations()[1])
+            return $scope.dropdownModalWindowsInformation.menuItemRealtionDropDown.value;
+        else if ($scope.selectedMenuItem.menuType == getAllMenuReations()[2])
+            return $scope.headerModalWindowsInformation.menuItemRealtionDropDown.value;
+    }
+
+    function getSelectedSubmitId() {
+//        if ($scope.selectedMenuItem.menuType == getAllMenuReations()[0])
+//            return $scope.rootModalWindowsInformation.submitId;
+//        else if ($scope.selectedMenuItem.menuType == getAllMenuReations()[1])
+//            return $scope.dropdownModalWindowsInformation.submitId;
+        return $scope.modalWindowsInformation.submitId;
+    }
+
+    function getAllMenuReations() {
+        return $scope.modalWindowsInformation.menuItemRealtionDropDown.values
+    }
+
     $scope.submitNewMenuItemModalWindow = function () {
         $scope.errorMessage = ""
         var selectedMenuItem = $scope.selectedMenuItem;
-        var menuItemRelation = $scope.modalWindowsInformation.menuItemRealtionDropDown.value;
-        var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
-        var submitId = $scope.modalWindowsInformation.submitId;
+        var menuItemRelation = getSelectedMenuRelation();
+        var menuItemRelationList = getAllMenuReations();
+        var submitId = getSelectedSubmitId();
 
         if (submitId != null) {
             for (var i = 0; i < $scope.flatMenuDict.length; i++) {
@@ -428,12 +503,12 @@ app.controller("HelloController", function ($scope, informationFactory) {
         addSubmenusToRootMenu(menuItem, menuItemRelationList);
     }
 
-    $scope.setupFlatMenuDict = function(){
+    $scope.setupFlatMenuDict = function () {
         clearAndUpdateMenuDict();
     }
 
     var getMenuFileSuccessCallback = function (data, status) {
-        var menuItemRelationList = $scope.modalWindowsInformation.menuItemRealtionDropDown.values;
+        var menuItemRelationList = getAllMenuReations();
 
         if ($scope.menuSideDropdown.value == "left") {
             for (var i = 0; i < data.left.length; i++) {
