@@ -91,6 +91,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
             if (currentMenuItem.level == 1) {
                 currentMenuItem['children'] = []
+                currentMenuItem['submenu'] = []
                 originalMenuDict.push(currentMenuItem)
             }
             else if (currentMenuItem.level == 2) {
@@ -126,20 +127,34 @@ app.controller("HelloController", function ($scope, informationFactory) {
             for (var j = 0; j < levelTwoMenuItems.length; j++) {
                 delete levelTwoMenuItems[j]["level"];
                 delete levelTwoMenuItems[j]["parent"];
-                delete originalMenuDict[i]["menuType"]
+                delete levelTwoMenuItems[j]["menuType"]
                 var levelThreeMenuItems = originalMenuDict[i].children[j].submenu;
 
                 for (var k = 0; k < levelThreeMenuItems.length; k++) {
                     delete levelThreeMenuItems[k]["level"];
                     delete levelThreeMenuItems[k]["parent"];
-                    delete originalMenuDict[i]["menuType"]
+                    delete levelThreeMenuItems[k]["menuType"]
                     var levelFourMenuItems = originalMenuDict[i].children[j].submenu[k].list;
 
                     for (var l = 0; l < levelFourMenuItems.length; l++) {
                         delete levelFourMenuItems[l]["level"];
                         delete levelFourMenuItems[l]["parent"];
-                        delete originalMenuDict[i]["menuType"]
+                        delete levelFourMenuItems[l]["menuType"]
                     }
+                }
+            }
+
+            levelTwoMenuItems = originalMenuDict[i].submenu;
+            for (var m = 0; m < levelTwoMenuItems.length; m++) {
+                delete levelTwoMenuItems[m]["level"];
+                delete levelTwoMenuItems[m]["parent"];
+                delete levelTwoMenuItems[m]["menuType"]
+                var levelThreeMenuItems = originalMenuDict[i].submenu[m].list;
+
+                for (var n = 0; n < levelThreeMenuItems.length; n++) {
+                    delete levelThreeMenuItems[n]["level"];
+                    delete levelThreeMenuItems[n]["parent"];
+                    delete levelThreeMenuItems[n]["menuType"]
                 }
             }
         }
@@ -173,7 +188,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 if (menuItem.menuType.type == menuItemTypes[1].type) {
                     parentMenuItem['children'].push(menuItem)
                 }
-                else if (menuItem.menuType == menuItemTypes[2]) {
+                else if (menuItem.menuType.type == menuItemTypes[2].type) {
                     parentMenuItem['submenu'].push(menuItem)
                 }
 
@@ -186,11 +201,19 @@ app.controller("HelloController", function ($scope, informationFactory) {
     var addThirdLevelMenuToParent = function (menuItem) {
         for (var i = 0; i < originalMenuDict.length; i++) {
             for (var j = 0; j < originalMenuDict[i].children.length; j++) {
-                //thirdLevelMenuDict = originalMenuDict[i].children[j];
-                var thirdLevelMenuDict = jQuery.extend(true, {}, originalMenuDict[i].children[j]);
-                if (thirdLevelMenuDict.submit == menuItem.parent) {
-                    thirdLevelMenuDict['submenu'].push(menuItem)
-                    originalMenuDict[i].children[j] = thirdLevelMenuDict;
+                var secondLevelChild = jQuery.extend(true, {}, originalMenuDict[i].children[j]);
+                if (secondLevelChild.submit == menuItem.parent) {
+                    secondLevelChild['submenu'].push(menuItem)
+                    originalMenuDict[i].children[j] = secondLevelChild;
+                    break;
+                }
+            }
+
+            for (var k = 0; k < originalMenuDict[i].submenu.length; k++) {
+                var secondLevelSubmenu = jQuery.extend(true, {}, originalMenuDict[i].submenu[k]);
+                if (secondLevelSubmenu.submit == menuItem.parent) {
+                    secondLevelSubmenu['list'].push(menuItem)
+                    originalMenuDict[i].submenu[k] = secondLevelSubmenu;
                     break;
                 }
             }
@@ -201,7 +224,6 @@ app.controller("HelloController", function ($scope, informationFactory) {
         for (var i = 0; i < originalMenuDict.length; i++) {
             for (var j = 0; j < originalMenuDict[i].children.length; j++) {
                 for (var k = 0; k < originalMenuDict[i].children[j].submenu.length; k++) {
-                    //thirdLevelMenuDict = originalMenuDict[i].children[j].submenu[k];
                     var thirdLevelMenuDict = jQuery.extend(true, {}, originalMenuDict[i].children[j].submenu[k]);
 
                     if (thirdLevelMenuDict.submit == menuItem.parent) {
@@ -380,6 +402,53 @@ app.controller("HelloController", function ($scope, informationFactory) {
         $scope.flatMenuDict.splice(index + 1, 0, newMenuItem);
     }
 
+    function addChildrenToRootMenu(menuItem, menuItemRelationList) {
+        for (var j = 0; j < menuItem['children'].length; j++) {
+            var childItem = menuItem['children'][j];
+            childItem['level'] = 2;
+            childItem['parent'] = menuItem['submit']
+            childItem['menuType'] = menuItemRelationList[1]
+            $scope.flatMenuDict.push(childItem);
+
+            for (var k = 0; k < childItem['submenu'].length; k++) {
+                var submenuItem = childItem['submenu'][k];
+                submenuItem['level'] = 3;
+                submenuItem['parent'] = childItem['submit']
+                submenuItem['menuType'] = menuItemRelationList[2]
+                $scope.flatMenuDict.push(submenuItem);
+
+                for (var l = 0; l < submenuItem['list'].length; l++) {
+                    var listItem = submenuItem['list'][l];
+                    listItem['level'] = 4;
+                    listItem['parent'] = submenuItem['submit']
+                    listItem['menuType'] = menuItemRelationList[3]
+                    $scope.flatMenuDict.push(listItem);
+                }
+                submenuItem['list'] = []
+            }
+            childItem['submenu'] = []
+        }
+    }
+
+    function addSubmenusToRootMenu(menuItem, menuItemRelationList) {
+        for (var j = 0; j < menuItem['submenu'].length; j++) {
+            var submenuItem = menuItem['submenu'][j];
+            submenuItem['level'] = 2;
+            submenuItem['parent'] = menuItem['submit']
+            submenuItem['menuType'] = menuItemRelationList[2]
+            $scope.flatMenuDict.push(submenuItem);
+
+            for (var l = 0; l < submenuItem['list'].length; l++) {
+                var listItem = submenuItem['list'][l];
+                listItem['level'] = 3;
+                listItem['parent'] = submenuItem['submit']
+                listItem['menuType'] = menuItemRelationList[3]
+                $scope.flatMenuDict.push(listItem);
+            }
+            submenuItem['list'] = []
+        }
+    }
+
     var getMenuFileSuccessCallback = function (data, status) {
 
         $scope.menuDict = data;
@@ -391,49 +460,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
             menuItem['menuType'] = menuItemRelationList[0]
             $scope.flatMenuDict.push(menuItem);
 
-            for (var j = 0; j < menuItem['children'].length; j++) {
-                var childItem = menuItem['children'][j];
-                childItem['level'] = 2;
-                childItem['parent'] = menuItem['submit']
-                childItem['menuType'] = menuItemRelationList[1]
-                $scope.flatMenuDict.push(childItem);
-
-                for (var k = 0; k < childItem['submenu'].length; k++) {
-                    var submenuItem = childItem['submenu'][k];
-                    submenuItem['level'] = 3;
-                    submenuItem['parent'] = childItem['submit']
-                    submenuItem['menuType'] = menuItemRelationList[2]
-                    $scope.flatMenuDict.push(submenuItem);
-
-                    for (var l = 0; l < submenuItem['list'].length; l++) {
-                        var listItem = submenuItem['list'][l];
-                        listItem['level'] = 4;
-                        listItem['parent'] = submenuItem['submit']
-                        listItem['menuType'] = menuItemRelationList[3]
-                        $scope.flatMenuDict.push(listItem);
-                    }
-                    submenuItem['list'] = []
-                }
-                childItem['submenu'] = []
-            }
-
-            for (var j = 0; j < menuItem['submenu'].length; j++) {
-                var submenuItem = menuItem['submenu'][j];
-                submenuItem['level'] = 2;
-                submenuItem['parent'] = menuItem['submit']
-                submenuItem['menuType'] = menuItemRelationList[2]
-                $scope.flatMenuDict.push(submenuItem);
-
-                for (var l = 0; l < submenuItem['list'].length; l++) {
-                    var listItem = submenuItem['list'][l];
-                    listItem['level'] = 3;
-                    listItem['parent'] = submenuItem['submit']
-                    listItem['menuType'] = menuItemRelationList[3]
-                    $scope.flatMenuDict.push(listItem);
-                }
-                submenuItem['list'] = []
-            }
-            menuItem['children'] = []
+            addChildrenToRootMenu(menuItem, menuItemRelationList);
+            addSubmenusToRootMenu(menuItem, menuItemRelationList);
         }
     };
 
