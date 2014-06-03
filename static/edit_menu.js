@@ -180,16 +180,30 @@ app.controller("HelloController", function ($scope, informationFactory) {
         }
     }
 
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+
+    var guid = function () {
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    };
+
+    ////TODO remove UUID attribute
     var removeUnusedAttributes = function () {
         for (var i = 0; i < originalMenuDict.length; i++) {
             delete originalMenuDict[i]["level"];
             delete originalMenuDict[i]["menuType"]
+            delete originalMenuDict[i]["guid"]
             var levelTwoMenuItems = originalMenuDict[i].children;
 
             for (var j = 0; j < levelTwoMenuItems.length; j++) {
                 delete levelTwoMenuItems[j]["level"];
                 delete levelTwoMenuItems[j]["parent"];
                 delete levelTwoMenuItems[j]["menuType"]
+                delete levelTwoMenuItems[j]["guid"]
                 var levelThreeMenuItems = originalMenuDict[i].children[j].submenu;
 
                 if (levelThreeMenuItems == null)
@@ -199,6 +213,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
                     delete levelThreeMenuItems[k]["level"];
                     delete levelThreeMenuItems[k]["parent"];
                     delete levelThreeMenuItems[k]["menuType"]
+                    delete levelThreeMenuItems[k]["guid"]
                     var levelFourMenuItems = originalMenuDict[i].children[j].submenu[k].list;
 
                     if (levelFourMenuItems == null)
@@ -261,7 +276,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
         var menuItemTypes = getMenuRelationsOptions(menuItem.menuType);
 
         for (var i = 0; i < originalMenuDict.length; i++) {
-            if (originalMenuDict[i].submit == menuItem.parent) {
+            ////TODO change to UUID
+            if (originalMenuDict[i].guid == menuItem.parent) {
                 var parentMenuItem = jQuery.extend(true, {}, originalMenuDict[i]);
 
                 if (menuItem.menuType.type == menuItemTypes[1].type) {
@@ -283,7 +299,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
         for (var i = 0; i < originalMenuDict.length; i++) {
             for (var j = 0; j < originalMenuDict[i].children.length; j++) {
                 var secondLevelChild = jQuery.extend(true, {}, originalMenuDict[i].children[j]);
-                if (secondLevelChild.submit == menuItem.parent) {
+                ////TODO change to UUID
+                if (secondLevelChild.guid == menuItem.parent) {
                     menuItem['list'] = []
                     secondLevelChild['submenu'].push(menuItem)
                     originalMenuDict[i].children[j] = secondLevelChild;
@@ -293,7 +310,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
             for (var k = 0; k < originalMenuDict[i].submenu.length; k++) {
                 var secondLevelSubmenu = jQuery.extend(true, {}, originalMenuDict[i].submenu[k]);
-                if (secondLevelSubmenu.submit == menuItem.parent) {
+                ////TODO change to UUID
+                if (secondLevelSubmenu.guid == menuItem.parent) {
                     secondLevelSubmenu['list'].push(menuItem)
                     originalMenuDict[i].submenu[k] = secondLevelSubmenu;
                     break;
@@ -311,7 +329,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
                 for (var k = 0; k < originalMenuDict[i].children[j].submenu.length; k++) {
                     var thirdLevelMenuDict = jQuery.extend(true, {}, originalMenuDict[i].children[j].submenu[k]);
 
-                    if (thirdLevelMenuDict.submit == menuItem.parent) {
+                    ////TODO change to UUID
+                    if (thirdLevelMenuDict.guid == menuItem.parent) {
                         thirdLevelMenuDict['list'].push(menuItem)
                         originalMenuDict[i].children[j].submenu[k] = thirdLevelMenuDict;
                         break;
@@ -335,7 +354,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
         var childrenIndexList = []
         for (var index = 0; index < $scope.flatMenuDict.length; index++) {
             if ($scope.flatMenuDict[index].level > menuItem.level) {
-                if (menuItem.submit == $scope.flatMenuDict[index].parent) {
+                ////TODO change to UUID
+                if (menuItem.guid == $scope.flatMenuDict[index].parent) {
                     subChildrenIndexList = getChildrenIndexs($scope.flatMenuDict[index])
                     childrenIndexList.push(index)
                     childrenIndexList = childrenIndexList.concat(subChildrenIndexList)
@@ -403,8 +423,9 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
             if (selectedMenuItem.level == 1 && menuItemRelation == 'sibling')
                 newMenuItem['class'] = ""
+            ////TODO UUID
             else
-                newMenuItem['parent'] = selectedMenuItem['submit']
+                newMenuItem['parent'] = selectedMenuItem['guid']
 
 
             if (menuItemRelation == menuItemRelationList[0].type) {
@@ -433,7 +454,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
     var getMenuItemIndex = function (menuItem) {
         for (var i = 0; i < $scope.flatMenuDict.length; i++) {
-            if ($scope.flatMenuDict[i].submit == menuItem.submit) {
+            ////TODO change to uuid
+            if ($scope.flatMenuDict[i].guid == menuItem.guid) {
                 return i;
             }
         }
@@ -447,21 +469,26 @@ app.controller("HelloController", function ($scope, informationFactory) {
         for (var j = 0; j < menuItem['children'].length; j++) {
             var childItem = menuItem['children'][j];
             childItem['level'] = 2;
-            childItem['parent'] = menuItem['submit']
+            ////TODO UUID
+            childItem['parent'] = menuItem['guid']
             childItem['menuType'] = menuItemRelationList[1]
+            childItem['guid'] = guid();
             $scope.flatMenuDict.push(childItem);
 
             for (var k = 0; k < childItem['submenu'].length; k++) {
                 var submenuItem = childItem['submenu'][k];
                 submenuItem['level'] = 3;
-                submenuItem['parent'] = childItem['submit']
+                ////TODO UUID
+                submenuItem['parent'] = childItem['guid']
                 submenuItem['menuType'] = menuItemRelationList[2]
+                submenuItem['guid'] = guid();
                 $scope.flatMenuDict.push(submenuItem);
 
                 for (var l = 0; l < submenuItem['list'].length; l++) {
                     var listItem = submenuItem['list'][l];
                     listItem['level'] = 4;
-                    listItem['parent'] = submenuItem['submit']
+                    ////TODO UUID
+                    listItem['parent'] = submenuItem['guid']
                     listItem['menuType'] = menuItemRelationList[3]
                     $scope.flatMenuDict.push(listItem);
                 }
@@ -475,14 +502,16 @@ app.controller("HelloController", function ($scope, informationFactory) {
         for (var j = 0; j < menuItem['submenu'].length; j++) {
             var submenuItem = menuItem['submenu'][j];
             submenuItem['level'] = 2;
-            submenuItem['parent'] = menuItem['submit']
+            ////TODO UUID
+            submenuItem['parent'] = menuItem['guid']
             submenuItem['menuType'] = menuItemRelationList[2]
             $scope.flatMenuDict.push(submenuItem);
 
             for (var l = 0; l < submenuItem['list'].length; l++) {
                 var listItem = submenuItem['list'][l];
                 listItem['level'] = 3;
-                listItem['parent'] = submenuItem['submit']
+                ////TODO UUID
+                listItem['parent'] = submenuItem['guid']
                 listItem['menuType'] = menuItemRelationList[3]
                 $scope.flatMenuDict.push(listItem);
             }
@@ -493,6 +522,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
     function buildFlattMenuDict(menuItem, menuItemRelationList) {
         menuItem['level'] = 1;
         menuItem['menuType'] = menuItemRelationList[0]
+        menuItem['guid'] = guid()
         $scope.flatMenuDict.push(menuItem);
 
         addChildrenToRootMenu(menuItem, menuItemRelationList);
