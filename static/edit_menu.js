@@ -398,11 +398,17 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
         if (submitId != null) {
             for (var i = 0; i < $scope.flatMenuDict.length; i++) {
+
+                if (submitId == "" && menuItemRelation == getAllMenuReations()[0].type){
+                    break
+                }
+
                 if (submitId == $scope.flatMenuDict[i].submit) {
                     $scope.errorMessage = "The submit id you entered is not unique"
                     return
                 }
-                else if (submitId == "") {
+
+                else if (submitId == "" && menuItemRelation != getAllMenuReations()[0].type) {
                     $scope.errorMessage = "No submit id has been entered"
                     return
                 }
