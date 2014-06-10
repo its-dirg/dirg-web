@@ -392,14 +392,14 @@ app.controller("HelloController", function ($scope, informationFactory) {
     $scope.submitNewMenuItemModalWindow = function () {
         $scope.errorMessage = ""
         var selectedMenuItem = $scope.selectedMenuItem;
-        var menuItemRelation = getSelectedMenuRelation();
+        var selectedMenuItemRelation = getSelectedMenuRelation();
         var menuItemRelationList = getAllMenuReations();
         var submitId = getSelectedSubmitId();
 
         if (submitId != null) {
             for (var i = 0; i < $scope.flatMenuDict.length; i++) {
 
-                if (submitId == "" && menuItemRelation == getAllMenuReations()[0].type){
+                if (submitId == "" && selectedMenuItemRelation == getAllMenuReations()[0].type){
                     break
                 }
 
@@ -408,7 +408,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
                     return
                 }
 
-                else if (submitId == "" && menuItemRelation != getAllMenuReations()[0].type) {
+                else if (submitId == "" && selectedMenuItemRelation != getAllMenuReations()[0].type) {
                     $scope.errorMessage = "No submit id has been entered"
                     return
                 }
@@ -418,32 +418,34 @@ app.controller("HelloController", function ($scope, informationFactory) {
             var newMenuItem = {
                 "name": "",
                 "submit": submitId,
-                "type": $scope.menuItemVisibility.values[0].type,
+                "type": $scope.menuItemVisibility.values[0].type
             }
 
-            if (selectedMenuItem.level == 1 && menuItemRelation == 'sibling')
+            if (selectedMenuItem.level == 1 && selectedMenuItemRelation == 'sibling')
                 newMenuItem['class'] = ""
+            else if (selectedMenuItemRelation == selectedMenuItem.menuType.type)
+                newMenuItem['parent'] = selectedMenuItem['parent']
             else
                 newMenuItem['parent'] = selectedMenuItem['guid']
 
 
-            if (menuItemRelation == menuItemRelationList[0].type) {
+            if (selectedMenuItemRelation == menuItemRelationList[0].type) {
                 newMenuItem['level'] = 1;
                 newMenuItem['menuType'] = menuItemRelationList[0]
                 newMenuItem['guid'] = guid()
             }
-            else if (menuItemRelation == menuItemRelationList[1].type) {
+            else if (selectedMenuItemRelation == menuItemRelationList[1].type) {
                 newMenuItem['level'] = 2;
                 newMenuItem['menuType'] = menuItemRelationList[1]
                 newMenuItem['guid'] = guid()
             }
-            else if (menuItemRelation == menuItemRelationList[2].type) {
+            else if (selectedMenuItemRelation == menuItemRelationList[2].type) {
                 newMenuItem['level'] = selectedMenuItem['level'] + 1;
                 newMenuItem['menuType'] = menuItemRelationList[2]
                 newMenuItem['type'] = $scope.headerVisibility.values[0].type
                 newMenuItem['guid'] = guid()
             }
-            else if (menuItemRelation == menuItemRelationList[3].type) {
+            else if (selectedMenuItemRelation == menuItemRelationList[3].type) {
                 newMenuItem['level'] = selectedMenuItem['level'] + 1;
                 newMenuItem['menuType'] = menuItemRelationList[3]
             }
@@ -472,9 +474,10 @@ app.controller("HelloController", function ($scope, informationFactory) {
 
         for(var i = index+1; i < menuLenght; i++){
             if ($scope.flatMenuDict[i].level <= currentLevel){
-                return i;
+                break
             }
         }
+        return i;
     }
 
     var addElemetToMenuDict = function (newMenuItem, index) {
