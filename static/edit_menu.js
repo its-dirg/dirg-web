@@ -418,7 +418,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
             var newMenuItem = {
                 "name": "",
                 "submit": submitId,
-                "type": $scope.menuItemVisibility.values[0].type
+                "type": $scope.menuItemVisibility.values[0].type,
             }
 
             if (selectedMenuItem.level == 1 && menuItemRelation == 'sibling')
@@ -430,15 +430,18 @@ app.controller("HelloController", function ($scope, informationFactory) {
             if (menuItemRelation == menuItemRelationList[0].type) {
                 newMenuItem['level'] = 1;
                 newMenuItem['menuType'] = menuItemRelationList[0]
+                newMenuItem['guid'] = guid()
             }
             else if (menuItemRelation == menuItemRelationList[1].type) {
                 newMenuItem['level'] = 2;
                 newMenuItem['menuType'] = menuItemRelationList[1]
+                newMenuItem['guid'] = guid()
             }
             else if (menuItemRelation == menuItemRelationList[2].type) {
                 newMenuItem['level'] = selectedMenuItem['level'] + 1;
                 newMenuItem['menuType'] = menuItemRelationList[2]
                 newMenuItem['type'] = $scope.headerVisibility.values[0].type
+                newMenuItem['guid'] = guid()
             }
             else if (menuItemRelation == menuItemRelationList[3].type) {
                 newMenuItem['level'] = selectedMenuItem['level'] + 1;
