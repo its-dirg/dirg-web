@@ -35,6 +35,9 @@ PORT must be the same as in server_conf.py as well as the value of HTTPS.
 
 BASEURL must be of the same value as server_conf.py.
 
+If you do not have any production certifications you can generate self signed certificates by running the script [..]/sp_cert/create_key.sh.
+If you use this method the attributes "key_file" and "cert_file "in sp_conf.py can remain unchanged, otherwise update them to the correct path of your certificates.
+
 You can leave all the other configurations as they are. If you want to know more about the CONFIG variable, please read `pysaml2 documentations <https://dirg.org.umu.se/page/pysaml2>`_.
 
 
@@ -47,9 +50,9 @@ Federated login
 ---------------
 First you need to make sure that you added the necessary info in sp_conf.py.
 
-Generate the metadata for Dirg-web by using::
+Generate the metadata for Dirg-web by running::
 
-    make_metadata.py sp_conf.py > sp.xml
+    ./create_metadata.sh
 
 Don't forget to add the metadata in the IDP's configuration file.
 
