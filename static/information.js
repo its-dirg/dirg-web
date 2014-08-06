@@ -276,15 +276,6 @@
         };
 
         /**
-         * Handles the response from the application server when HTML content for a CMS page is saved.
-         */
-        var saveInformationSuccessCallback = function (data, status, headers, config) {
-            $scope.information = data;
-            $scope.edit = false;
-            toaster.pop('success', "Notification", "Successfully saved the page!");
-        };
-
-        /**
          * Will find and configure the submenu for the current page.
          * @param menu      Right($scope.menu.right) or left($scope.menu.left) top menu.
          * @param breadcrum The current breadcrum.
@@ -506,10 +497,17 @@
 
         /**
          * Will save the current HTML page that is beeing edited with tinymce.
+         * @param shouldContinueEdit    boolean value whether the the page content should be reloaded or just continue
+         *                              editing
          */
-        $scope.savePage = function () {
+        $scope.savePage = function (shouldContinueEdit) {
             if ($scope.allowedEdit) {
-                informationFactory.saveInformation($scope.page, $scope.submenu_header, $scope.submenu_page, tinymce.activeEditor.getContent()).success(saveInformationSuccessCallback).error(errorCallback);
+                var request = informationFactory.saveInformation($scope.page, $scope.submenu_header, $scope.submenu_page, tinymce.activeEditor.getContent()).error(errorCallback);
+                request.success(function(data, status, headers, config){
+                    $scope.information = data;
+                    $scope.edit = shouldContinueEdit;
+                    toaster.pop('success', "Notification", "Successfully saved the page!");
+                });
             }
         };
 
@@ -897,8 +895,14 @@
                                 plugins: [
                                     "advlist autolink link image lists charmap print preview hr anchor pagebreak spellchecker",
                                     "searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking",
-                                    "save table contextmenu directionality emoticons template paste textcolor"
-                                ]
+                                    "table contextmenu directionality emoticons template paste textcolor"
+                                ],
+                                setup: function(editor, url) {
+                                    editor.addShortcut('ctrl+s','Save', function() {
+                                        scope.savePage(true);
+                                        scope.$apply();
+                                    });
+                                }
                             });
                         } else {
                             element[0].innerHTML="";
