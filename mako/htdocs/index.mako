@@ -62,10 +62,6 @@ Please view static/test.js for more example of angular and toaster.
     <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true && iframe==false" ng-click="editPage();"></div>
     <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true && iframe==false"  ng-click="savePage(false);"></div>
 
-    <div ng-controller="FileUploadCtrl">
-        <input type="file" accept="{{acceptedFileTypes}}" nv-file-select uploader="uploader"/>
-    </div>
-
 <div ng-show="iframe==true" id="frame_div" class="iframe_div">
     <span data-toggle="tooltip" title="Click to enter fullscreen mode." id="max_icon" class="glyphicon glyphicon-plus-sign show_icon" onclick="max_iframe()"></span>
     <span title="Click to leave fullscreen mode." id="min_icon" class="glyphicon glyphicon-minus-sign hide_icon" onclick="min_iframe()"></span>
@@ -259,6 +255,26 @@ Please view static/test.js for more example of angular and toaster.
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!-- Modal upload images-->
+    <div class="modal fade" id="modalUploadImages" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="closeUploadImages()">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Upload images</h4>
+            </div>
+          <div class="modal-body">
+            <div ng-controller="FileUploadCtrl">
+                <input type="file" accept="{{acceptedFileTypes}}" nv-file-select uploader="uploader"/>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="closeUploadImages()">Cancel</button>
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->

@@ -666,6 +666,16 @@
         };
 
 
+        $scope.openUploadImageWindow = function () {
+            $('#modalUploadImages').modal('show')
+        };
+
+
+        $scope.closeUploadImages = function () {
+            $('#modalUploadImages').modal('hide')
+        };
+
+
         /**
          * Deletes a user.
          * @param email The e-mail for a user.
