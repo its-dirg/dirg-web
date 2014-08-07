@@ -1397,6 +1397,10 @@ class Information(object):
             return self.service_error("Invalid request!", ex, True)
 
     def handle_upload_image(self):
+        """
+        Reads and saves the uploaded image to the static directory
+        :return: A success message
+        """
         form = cgi.FieldStorage(fp=self.environ['wsgi.input'], environ=self.environ)
         filename = form['file'].filename
         data = form.getvalue('file')

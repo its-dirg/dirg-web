@@ -6,11 +6,8 @@
 
 //Controller which will be executed when the web page is loaded
 app.controller('FileUploadCtrl', ['$scope', 'toaster', 'FileUploader', function ($scope, toaster, FileUploader) {
-    var acceptedFileTypes = ['.txt', '.png', '.jpg', '.jpeg'];
-    var acceptedMediaTypes = ['plain', 'png', 'jpg', 'jpeg'];
+    var acceptedFileTypes = ['.png', '.jpg', '.jpeg'];
     $scope.acceptedFileTypes = acceptedFileTypes.join();
-    console.log($scope.acceptedFileTypes);
-
 
     var uploader = $scope.uploader = new FileUploader({
         url: '/uploadImage',
@@ -20,33 +17,15 @@ app.controller('FileUploadCtrl', ['$scope', 'toaster', 'FileUploader', function 
         autoUpload: true
     });
 
-    uploader.filters.push({ // TODO unnecessary when filtering in the user dialog?
-        name: 'FileTypeFilter',
-        fn: function (item) {
-            var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
-            var accept = '|' + acceptedMediaTypes.join('|') + '|';
-            console.log(type);
-            return accept.indexOf(type) !== -1;
-        }
-    });
-
-    uploader.onWhenAddingFileFailed = function (item /*{File|FileLikeObject}*/, filter, options) {
-        console.info('onWhenAddingFileFailed', item, filter, options);
-    };
-    uploader.onAfterAddingFile = function (fileItem) {
-        console.info('onAfterAddingFile', fileItem);
-    };
-    uploader.onProgressItem = function (fileItem, progress) {
-        console.info('onProgressItem', fileItem, progress);
-    };
     uploader.onSuccessItem = function (fileItem, response, status, headers) {
         console.info('onSuccessItem', fileItem, response, status, headers);
-        console.log('File upload SUCCESS!')
-    };
-    uploader.onErrorItem = function (fileItem, response, status, headers) {
-        console.info('onErrorItem', fileItem, response, status, headers);
-        console.log('File upload FAIL!')
+        toaster.pop('success', "Notification", "File successfully uploaded!");
+        $("#modalUploadImages").modal('hide');
     };
 
-    console.info('uploader', uploader);
+    uploader.onErrorItem = function (fileItem, response, status, headers) {
+        console.info('onErrorItem', fileItem, response, status, headers);
+        toaster.pop('error', "Notification", "Failed to upload file!");
+    };
+
 }]);
