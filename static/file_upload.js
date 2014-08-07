@@ -6,7 +6,8 @@
 
 //Controller which will be executed when the web page is loaded
 app.controller('FileUploadCtrl', ['$scope', 'toaster', 'FileUploader', function ($scope, toaster, FileUploader) {
-    var acceptedFileTypes = ['.png', '.jpg', '.jpeg'];
+    var acceptedFileTypes = ['.txt', '.png', '.jpg', '.jpeg'];
+    var acceptedMediaTypes = ['plain', 'png', 'jpg', 'jpeg'];
     $scope.acceptedFileTypes = acceptedFileTypes.join();
     console.log($scope.acceptedFileTypes);
 
@@ -19,11 +20,12 @@ app.controller('FileUploadCtrl', ['$scope', 'toaster', 'FileUploader', function 
         autoUpload: true
     });
 
-    uploader.filters.push({
+    uploader.filters.push({ // TODO unnecessary when filtering in the user dialog?
         name: 'FileTypeFilter',
         fn: function (item) {
-            var type = '|.' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
-            var accept = '|' + acceptedFileTypes.join('|') + '|';
+            var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+            var accept = '|' + acceptedMediaTypes.join('|') + '|';
+            console.log(type);
             return accept.indexOf(type) !== -1;
         }
     });

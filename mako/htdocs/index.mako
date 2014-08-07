@@ -61,6 +61,7 @@ Please view static/test.js for more example of angular and toaster.
     <div editmenu></div>
     <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true && iframe==false" ng-click="editPage();"></div>
     <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true && iframe==false"  ng-click="savePage(false);"></div>
+
     <div ng-controller="FileUploadCtrl">
         <input type="file" accept="{{acceptedFileTypes}}" nv-file-select uploader="uploader"/>
     </div>

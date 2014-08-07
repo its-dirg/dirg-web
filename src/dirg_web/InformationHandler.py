@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
+import cgi
 import json
 import datetime
 import time
 import copy
 import smtplib
+import StringIO
+
 from dirg_util.http_util import Response, ServiceError, Redirect
+
 from dirg_web.util import SecureSession, DirgWebDbValidationException, DirgWebDb
+
 
 __author__ = 'haho0032'
 
@@ -113,7 +118,8 @@ class Information(object):
             "file",
             "savefile",
             "information_init_app_js",
-            "post_left_menu"
+            "post_left_menu",
+            "uploadImage"
         ]
 
         #Init of the banned users space in the cache.
@@ -182,6 +188,8 @@ class Information(object):
             return self.handle_information_init_app_js()
         if path == "post_left_menu":
             return self.handle_post_left_menu()
+        if path == "uploadImage":
+            return self.handle_upload_image();
         else:
             return self.handle_index()
 
@@ -1387,3 +1395,14 @@ class Information(object):
                 return self.service_error(error_message)
         except Exception as ex:
             return self.service_error("Invalid request!", ex, True)
+
+    def handle_upload_image(self):
+        form = cgi.FieldStorage(fp=self.environ['wsgi.input'], environ=self.environ)
+        filename = form['file'].filename
+        data = form.getvalue('file')
+
+        outputFile = open("static/" + filename, 'w')
+        outputFile.write(data)
+        outputFile.close()
+
+        return self.return_json("The file was uploaded!")
