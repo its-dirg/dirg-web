@@ -61,6 +61,9 @@ Please view static/test.js for more example of angular and toaster.
     <div editmenu></div>
     <div class="glyphicon glyphicon-pencil editpage" ng-show="edit == false && allowedEdit == true && authenticated == true && iframe==false" ng-click="editPage();"></div>
     <div class="glyphicon glyphicon-floppy-save editpage" ng-show="edit == true && allowedEdit == true && authenticated == true && iframe==false"  ng-click="savePage(false);"></div>
+    <div ng-controller="FileUploadCtrl">
+        <input type="file" accept="{{acceptedFileTypes}}" nv-file-select uploader="uploader"/>
+    </div>
 
 <div ng-show="iframe==true" id="frame_div" class="iframe_div">
     <span data-toggle="tooltip" title="Click to enter fullscreen mode." id="max_icon" class="glyphicon glyphicon-plus-sign show_icon" onclick="max_iframe()"></span>
@@ -266,5 +269,7 @@ Please view static/test.js for more example of angular and toaster.
     </div>
     <script type="text/javascript" src="/information_init_app_js"></script>
     <script type="text/javascript" src="/static/information.js"></script>
+    <script type="text/javascript" src="/static/angular-file-upload.min.js"></script>
+    <script type="text/javascript" src="/static/file_upload.js"></script>
     ${parent.footer()}
 </%block>

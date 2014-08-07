@@ -1,1 +1,1 @@
-app = angular.module('main', ['toaster']).constant("serviceBasePath", "${base}")
+app = angular.module('main', ['toaster', 'angularFileUpload']).constant("serviceBasePath", "${base}")
