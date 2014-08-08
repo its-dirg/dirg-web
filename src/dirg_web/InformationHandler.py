@@ -77,6 +77,8 @@ class Information(object):
         if not os.path.exists(self.image_folder_path):
             os.makedirs(self.image_folder_path)
 
+        self.valid_extensions = ['png', 'jpg', 'jpeg']
+
         #The path the user will perform validation of an e-mail adress.
         self.verify_path = "/verify"
 
@@ -128,7 +130,8 @@ class Information(object):
             "savefile",
             "information_init_app_js",
             "post_left_menu",
-            "uploadImage"
+            "uploadImage",
+            "listUploadedImages"
         ]
 
         #Init of the banned users space in the cache.
@@ -198,7 +201,9 @@ class Information(object):
         if path == "post_left_menu":
             return self.handle_post_left_menu()
         if path == "uploadImage":
-            return self.handle_upload_image();
+            return self.handle_upload_image()
+        if path == "listUploadedImages":
+            return self.handle_list_uploaded_images()
         else:
             return self.handle_index()
 
@@ -1413,15 +1418,24 @@ class Information(object):
         filename = form['file'].filename
         data = form.getvalue('file')
 
-        outputFile = os.fdopen(os.open(self.image_folder_path + filename, os.O_WRONLY | os.O_CREAT, 0600), 'w')
-
-        valid_extensions = ['png', 'jpg', 'jpeg']
         file_extension = imghdr.what("/", bytearray(data))
 
-        if file_extension not in valid_extensions:
+        if file_extension not in self.valid_extensions:
             return self.service_error("The uploaded file is not a valid image file")
+
+        outputFile = os.fdopen(os.open(self.image_folder_path + filename, os.O_WRONLY | os.O_CREAT, 0600), 'w')
 
         outputFile.write(data)
         outputFile.close()
 
         return self.return_json("The file was uploaded!")
+
+    def handle_list_uploaded_images(self):
+        data = {"Images": []}
+
+        for file in os.listdir(self.image_folder_path):
+            for ext in self.valid_extensions:
+                if file.endswith(ext):
+                    data["Images"].append({"DisplayName": file, "ImagePath": self.image_folder_path + file})
+
+        return self.return_json(json.dumps(data))
