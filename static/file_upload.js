@@ -19,13 +19,13 @@ app.controller('FileUploadCtrl', ['$scope', 'toaster', 'FileUploader', function 
 
     uploader.onSuccessItem = function (fileItem, response, status, headers) {
         console.info('onSuccessItem', fileItem, response, status, headers);
-        toaster.pop('success', "Notification", "File successfully uploaded!");
+        toaster.pop('success', "Notification", response);
         $("#modalUploadImages").modal('hide');
     };
 
     uploader.onErrorItem = function (fileItem, response, status, headers) {
         console.info('onErrorItem', fileItem, response, status, headers);
-        toaster.pop('error', "Notification", "Failed to upload file!");
+        toaster.pop('error', "Notification", response['ExceptionMessage']);
     };
 
 }]);

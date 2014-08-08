@@ -6,7 +6,7 @@ import os
 import time
 import copy
 import smtplib
-import StringIO
+import imghdr
 
 from dirg_util.http_util import Response, ServiceError, Redirect
 
@@ -1414,6 +1414,13 @@ class Information(object):
         data = form.getvalue('file')
 
         outputFile = os.fdopen(os.open(self.image_folder_path + filename, os.O_WRONLY | os.O_CREAT, 0600), 'w')
+
+        valid_extensions = ['png', 'jpg', 'jpeg']
+        file_extension = imghdr.what("/", bytearray(data))
+
+        if file_extension not in valid_extensions:
+            return self.service_error("The uploaded file is not a valid image file")
+
         outputFile.write(data)
         outputFile.close()
 
