@@ -61,3 +61,5 @@ EMAIL_CONFIG = {
     "message_start": "Hi!\n\nPlease click on the link below to activate your account.",
     "message_end": "Regards,\n\nThe support!"
 }
+
+IMAGE_FOLDER_PATH = "static/"

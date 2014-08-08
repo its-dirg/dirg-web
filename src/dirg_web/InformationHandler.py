@@ -2,6 +2,7 @@
 import cgi
 import json
 import datetime
+import os
 import time
 import copy
 import smtplib
@@ -22,7 +23,7 @@ class Information(object):
     """
 
     def __init__(self, environ, start_response, session, logger, parameters, lookup, cache, auth_methods, sqlite_db,
-                 email_config, sphandler, base):
+                 email_config, sphandler, base, image_folder_path):
         """
         Constructor for the class.
         :param environ:        WSGI enviroment
@@ -53,7 +54,8 @@ class Information(object):
                                     "message_end": "Regards,\n\nThe support!"
                                 }
         :param sphandler:       The class that acts as SAML client. /src/sp/handler.py.
-        :base:                  Base url (context path) for the web application.
+        :param base:                  Base url (context path) for the web application.
+        :param image_folder_path: Folder in which the uploaded images will be stored
         """
         self.environ = environ
         self.start_response = start_response
@@ -67,6 +69,13 @@ class Information(object):
         self.email_config = email_config
         self.base = base
         self.sphandler = sphandler
+        self.image_folder_path = image_folder_path
+
+        if not self.image_folder_path.endswith("/"):
+            self.image_folder_path += "/"
+
+        if not os.path.exists(self.image_folder_path):
+            os.makedirs(self.image_folder_path)
 
         #The path the user will perform validation of an e-mail adress.
         self.verify_path = "/verify"
@@ -1353,7 +1362,6 @@ class Information(object):
             for user in users:
                 tmp_user = {}
                 tmp_user["surname"] = user["surname"]
-                tmp_user["admin"] = user["admin"]
                 tmp_user["verify"] = user["verify"]
                 tmp_user["email"] = user["email"]
                 tmp_user["valid"] = user["valid"]
@@ -1405,7 +1413,7 @@ class Information(object):
         filename = form['file'].filename
         data = form.getvalue('file')
 
-        outputFile = open("static/" + filename, 'w')
+        outputFile = os.fdopen(os.open(self.image_folder_path + filename, os.O_WRONLY | os.O_CREAT, 0600), 'w')
         outputFile.write(data)
         outputFile.close()
 

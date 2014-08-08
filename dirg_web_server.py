@@ -53,7 +53,7 @@ def application(environ, start_response):
 
     information = Information(environ, start_response, session, logger, parameters, LOOKUP, CACHE,
                               config.AUTHENTICATION_LIST , config.SQLITE_DB, config.EMAIL_CONFIG, sphandler,
-                              config.ISSUER)
+                              config.ISSUER, config.IMAGE_FOLDER_PATH)
 
     path = http_helper.path()
 
