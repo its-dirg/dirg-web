@@ -7,6 +7,7 @@ import time
 import copy
 import smtplib
 import imghdr
+from PIL import Image
 
 from dirg_util.http_util import Response, ServiceError, Redirect
 
@@ -1436,6 +1437,7 @@ class Information(object):
         for file in os.listdir(self.image_folder_path):
             for ext in self.valid_extensions:
                 if file.endswith(ext):
-                    data["Images"].append({"DisplayName": file, "ImagePath": self.image_folder_path + file})
+                    image_path = self.image_folder_path + file
+                    data["Images"].append({"DisplayName": file, "ImagePath": image_path})
 
         return self.return_json(json.dumps(data))

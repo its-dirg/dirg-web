@@ -912,6 +912,11 @@
                                         scope.savePage(true);
                                         scope.$apply();
                                     });
+                                },
+                                file_browser_callback: function(field_name, url, type, win) {
+                                    if (type === "image") {
+                                        scope.$broadcast("listImagesEvent", {"field_name": field_name, "window": win});
+                                    }
                                 }
                             });
                         } else {

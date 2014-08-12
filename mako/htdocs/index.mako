@@ -280,10 +280,38 @@ Please view static/test.js for more example of angular and toaster.
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
+    <!-- Modal list images-->
+    <div class="modal" id="modalListImages" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="closeUploadImages()">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Select image</h4>
+            </div>
+          <div class="modal-body">
+            <div ng-controller="ListImagesCtrl">
+                <div class="row" ng-repeat="imgSublist in imageList">
+                    <div ng-repeat="image in imgSublist" class="col-md-1 text-center image-thumbnail" ng-click="imageOnClick(image.ImagePath)">
+                        <img src="/{{image.ImagePath}}" width="90px" height="90px" class="img">
+                        <br>
+                        <div style="font-size: 10pt" class="box">{{image.DisplayName}}</div>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="closeUploadImages()">Cancel</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
 </%block>
 
 <%block name="footer">
     </div>
+
+    <script type="text/javascript" src="/static/list_images.js"></script>
     <script type="text/javascript" src="/information_init_app_js"></script>
     <script type="text/javascript" src="/static/information.js"></script>
     <script type="text/javascript" src="/static/angular-file-upload.min.js"></script>
