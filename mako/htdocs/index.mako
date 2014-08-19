@@ -292,7 +292,7 @@ Please view static/test.js for more example of angular and toaster.
             <div ng-controller="ListImagesCtrl">
                 <div class="row" ng-repeat="imgSublist in imageList">
                     <div ng-repeat="image in imgSublist" class="col-md-1 text-center image-thumbnail" ng-click="imageOnClick(image.ImagePath)">
-                        <img src="/{{image.ImagePath}}" width="90px" height="90px" class="img">
+                        <img src="{{image.ImagePath}}" width="90px" height="90px" class="img">
                         <br>
                         <div style="font-size: 10pt" class="box">{{image.DisplayName}}</div>
                     </div>

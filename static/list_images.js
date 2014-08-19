@@ -39,7 +39,7 @@ list_images.controller('ListImagesCtrl', function ($scope, listImagesFactory, to
         //$("#" + field_name).val("/" + image_path);
 
         var element = window.document.getElementById(field_name);
-        element.value = "/" + image_path;
+        element.value = image_path;
         console.log(element);
         $(element).change();
     }

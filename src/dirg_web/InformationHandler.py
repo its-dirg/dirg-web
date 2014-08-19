@@ -1437,7 +1437,7 @@ class Information(object):
         for file in os.listdir(self.image_folder_path):
             for ext in self.valid_extensions:
                 if file.endswith(ext):
-                    image_path = self.image_folder_path + file
+                    image_path = "/" + self.image_folder_path + file
                     data["Images"].append({"DisplayName": file, "ImagePath": image_path})
 
         return self.return_json(json.dumps(data))

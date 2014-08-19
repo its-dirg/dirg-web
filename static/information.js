@@ -902,6 +902,7 @@
                             tinymce.init({
                                 height : 300,
                                 selector: "textarea#information",
+                                relative_urls: false,
                                 plugins: [
                                     "advlist autolink link image lists charmap print preview hr anchor pagebreak spellchecker",
                                     "searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking",

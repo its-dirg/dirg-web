@@ -64,10 +64,9 @@ def application(environ, start_response):
         username_password = json.loads(username_password)
         return Response("You have performed a refresh.")(environ, start_response)
 
-    if http_helper.verify_static(path):
+    if http_helper.verify_static(path) or path.startswith(config.IMAGE_FOLDER_PATH):
         return http_helper.handle_static(path)
-
-    if information.verify(path):
+    elif information.verify(path):
         return information.handle(path)
     elif sphandler.verify_sp_requests(path):
         response = sphandler.handle_sp_requests(environ, start_response, path, session, parameters, information)
