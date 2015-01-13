@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from OpenSSL import SSL
 import os
 import json
 from saml2.metadata import create_metadata_string
@@ -115,9 +116,13 @@ if __name__ == '__main__':
     global srv
     srv = wsgiserver.CherryPyWSGIServer(('0.0.0.0', config.PORT), SessionMiddleware(application, config.SESSION_OPTS))
     srv.stats['Enabled'] = True
-    #SRV = wsgiserver.CherryPyWSGIServer(('0.0.0.0', config.PORT), application)
+
     if config.HTTPS:
         srv.ssl_adapter = ssl_pyopenssl.pyOpenSSLAdapter(config.SERVER_CERT, config.SERVER_KEY, config.CERT_CHAIN)
+        srv.ssl_adapter.context = srv.ssl_adapter.get_context()
+        srv.ssl_adapter.context.set_options(SSL.OP_NO_SSLv3)
+        srv.ssl_adapter.context.set_cipher_list('EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA256:EECDH:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA128-SHA:AES128-SHA')
+
     logger.info("Server starting")
     print "Server is listening on port: %s" % config.PORT
     try:
