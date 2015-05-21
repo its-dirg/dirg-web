@@ -7,7 +7,7 @@ import time
 import copy
 import smtplib
 import imghdr
-from PIL import Image
+#from PIL import Image
 
 from dirg_util.http_util import Response, ServiceError, Redirect
 

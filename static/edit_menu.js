@@ -381,6 +381,10 @@ app.controller("HelloController", function ($scope, informationFactory) {
             return $scope.headerModalWindowsInformation.menuItemRealtionDropDown.value;
     }
 
+    function getSelectedFrameSrc() {
+        return $scope.modalWindowsInformation.frameSrc;
+    }
+
     function getSelectedSubmitId() {
         return $scope.modalWindowsInformation.submitId;
     }
@@ -395,6 +399,7 @@ app.controller("HelloController", function ($scope, informationFactory) {
         var selectedMenuItemRelation = getSelectedMenuRelation();
         var menuItemRelationList = getAllMenuReations();
         var submitId = getSelectedSubmitId();
+        var frameSrc = getSelectedFrameSrc();
 
         if (submitId != null) {
             for (var i = 0; i < $scope.flatMenuDict.length; i++) {
@@ -418,7 +423,8 @@ app.controller("HelloController", function ($scope, informationFactory) {
             var newMenuItem = {
                 "name": "",
                 "submit": submitId,
-                "type": $scope.menuItemVisibility.values[0].type
+                "type": $scope.menuItemVisibility.values[0].type,
+                "iframe_src": frameSrc
             }
 
             if (selectedMenuItem.level == 1 && selectedMenuItemRelation == 'sibling')

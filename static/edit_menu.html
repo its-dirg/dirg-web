@@ -172,8 +172,15 @@
 
                     <input type="text" name="submitId" ng-model="modalWindowsInformation.submitId"
                            class="modalComponents">
+
+                    <br>
+                    <span class="modalComponents">Enter frame id</span>
                     <br>
 
+                    <input type="text" name="frameSrc" placeholder="/static/{id}/index.html" ng-model="modalWindowsInformation.frameSrc"
+                           class="modalComponents">
+
+                    <br>
                     <button class="btn btn-primary btn-sm modalComponents" ng-click="submitNewMenuItemModalWindow();">
                         Create menu item
                     </button>
